@@ -1,0 +1,49 @@
+{
+  "name": "@wordpress/storyshare",
+  "version": "4.2.1",
+  "description": "Provides support for the Block Editor.",
+  "author": "The WordPress Contributors",
+  "private": true,
+  "license": "GPL-2.0-or-later",
+  "keywords": [
+	"wordpress",
+	"gutenberg",
+	"shortcode"
+  ],
+  "homepage": "https://www.storyshareplatform.com",
+  "repository": {
+	"type": "git",
+	"url": "https://github.com/27partners/gutenberg.git",
+	"directory": "packages/shortcode"
+  },
+  "bugs": {
+	"url": "https://27partners.atlassian.net"
+  },
+  "main": "build/index.js",
+  "module": "build-module/index.js",
+  "dependencies": {
+	"@wordpress/api-fetch": "file:../api-fetch",
+	"@wordpress/components": "file:../components",
+	"@wordpress/compose": "file:../compose",
+	"@wordpress/data": "file:../data",
+	"@wordpress/element": "file:../element",
+	"@wordpress/i18n": "file:../i18n",
+	"classnames": "^2.2.6",
+	"enzyme-to-json": "3.3.5",
+	"lodash": "^4.17.20",
+	"moment": "^2.27.0",
+	"ramda": "^0.27.1",
+	"react-redux": "^7.2.1",
+	"react-test-renderer": "^16.13.1",
+	"react-textarea-autosize": "7.1.2",
+	"urijs": "^1.19.2"
+  },
+  "workspaces": {
+	"nohoist": [
+	  "enzyme-to-json"
+	]
+  },
+  "publishConfig": {
+	"access": "public"
+  }
+}

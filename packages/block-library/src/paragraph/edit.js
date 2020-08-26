@@ -21,6 +21,7 @@ import { createBlock } from '@wordpress/blocks';
 import { useSelect } from '@wordpress/data';
 import { useEffect, useState, useRef } from '@wordpress/element';
 import { formatLtr } from '@wordpress/icons';
+import { I18NToolbar } from '@wordpress/storyshare';
 
 /**
  * Browser dependencies
@@ -127,6 +128,7 @@ function ParagraphBlock( {
 						setAttributes( { align: newAlign } )
 					}
 				/>
+				<I18NToolbar />
 				<ParagraphRTLToolbar
 					direction={ direction }
 					setDirection={ ( newDirection ) =>

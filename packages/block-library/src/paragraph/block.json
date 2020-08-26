@@ -2,6 +2,10 @@
 	"name": "core/paragraph",
 	"category": "text",
 	"attributes": {
+		"i18n": {
+			"type": "object",
+			"default": {}
+		},
 		"align": {
 			"type": "string"
 		},
@@ -9,11 +13,13 @@
 			"type": "string",
 			"source": "html",
 			"selector": "p",
-			"default": ""
+			"default": "",
+		  	"i18n": true
 		},
 		"dropCap": {
 			"type": "boolean",
-			"default": false
+			"default": false,
+			"i18n": true
 		},
 		"placeholder": {
 			"type": "string"

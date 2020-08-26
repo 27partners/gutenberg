@@ -17,6 +17,7 @@ import edit from './edit';
 import metadata from './block.json';
 import save from './save';
 import transforms from './transforms';
+import { withI18N } from '@wordpress/storyshare';
 
 const { name } = metadata;
 
@@ -55,6 +56,6 @@ export const settings = {
 				( attributesToMerge.content || '' ),
 		};
 	},
-	edit,
+	edit: withI18N( metadata )( edit ),
 	save,
 };
