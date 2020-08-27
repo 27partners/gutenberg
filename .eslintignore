@@ -9,3 +9,5 @@ playground/dist
 vendor
 wordpress
 !.*.js
+
+packages/block-library/src/file/inspector.js
