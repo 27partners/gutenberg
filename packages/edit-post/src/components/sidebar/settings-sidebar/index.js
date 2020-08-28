@@ -70,10 +70,14 @@ const SettingsSidebar = () => {
 					<PostStatus />
 					<PluginDocumentSettingPanel.Slot />
 					<LastRevision />
+					{ /*
 					<PostLink />
+*/ }
 					<PostTaxonomies />
+					{ /*
 					<FeaturedImage />
 					<PostExcerpt />
+*/ }
 					<DiscussionPanel />
 					<PageAttributes />
 					<MetaBoxes location="side" />

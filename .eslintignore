@@ -11,3 +11,5 @@ wordpress
 !.*.js
 
 packages/block-library/src/file/inspector.js
+packages/edit-post/src/components/sidebar/settings-sidebar/index.js
+packages/edit-post/src/components/visual-editor/index.js
