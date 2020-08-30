@@ -4,7 +4,7 @@
 import { useSelect } from '@wordpress/data';
 import { Button } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
-import { wordpress } from '@wordpress/icons';
+import { storyshare } from '@wordpress/icons';
 
 function FullscreenModeClose( { icon } ) {
 	const isActive = useSelect( ( select ) => {
@@ -15,7 +15,7 @@ function FullscreenModeClose( { icon } ) {
 		return null;
 	}
 
-	const buttonIcon = icon || wordpress;
+	const buttonIcon = icon || storyshare;
 
 	return (
 		<Button

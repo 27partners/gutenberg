@@ -34,9 +34,11 @@ registerPlugin( 'edit-post', {
 							<KeyboardShortcutsHelpMenuItem
 								onSelect={ onClose }
 							/>
+							{ /*
 							<WelcomeGuideMenuItem />
+*/ }
 							<CopyContentMenuItem />
-							<MenuItem
+							{ /*<MenuItem
 								role="menuitem"
 								href={ __(
 									'https://wordpress.org/support/article/wordpress-editor/'
@@ -45,7 +47,7 @@ registerPlugin( 'edit-post', {
 								rel="noopener noreferrer"
 							>
 								{ __( 'Help' ) }
-							</MenuItem>
+							</MenuItem>*/ }
 						</>
 					) }
 				</ToolsMoreMenuGroup>

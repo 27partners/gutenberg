@@ -140,6 +140,7 @@ export { default as starEmpty } from './library/star-empty';
 export { default as starFilled } from './library/star-filled';
 export { default as starHalf } from './library/star-half';
 export { default as stretchFullWidth } from './library/stretch-full-width';
+export { default as storyshare } from './library/storyshare';
 export { default as shipping } from './library/shipping';
 export { default as stretchWide } from './library/stretch-wide';
 export { default as subscript } from './library/subscript';

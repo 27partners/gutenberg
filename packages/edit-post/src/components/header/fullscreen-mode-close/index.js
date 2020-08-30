@@ -10,7 +10,7 @@ import { useSelect } from '@wordpress/data';
 import { Button } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import { addQueryArgs } from '@wordpress/url';
-import { wordpress } from '@wordpress/icons';
+import { storyshare } from '@wordpress/icons';
 
 function FullscreenModeClose() {
 	const { isActive, postType } = useSelect( ( select ) => {
@@ -31,7 +31,7 @@ function FullscreenModeClose() {
 	return (
 		<Button
 			className="edit-post-fullscreen-mode-close"
-			icon={ wordpress }
+			icon={ storyshare }
 			iconSize={ 36 }
 			href={ addQueryArgs( 'edit.php', {
 				post_type: postType.slug,

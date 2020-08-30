@@ -7,8 +7,8 @@ export const PREFERENCES_DEFAULTS = {
 	},
 	features: {
 		fixedToolbar: false,
-		welcomeGuide: true,
-		fullscreenMode: true,
+		welcomeGuide: false,
+		fullscreenMode: false,
 	},
 	hiddenBlockTypes: [],
 	preferredStyleVariations: {},
