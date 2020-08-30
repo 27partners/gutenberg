@@ -13,6 +13,7 @@ import {
 	AlignmentToolbar,
 	__experimentalBlock as Block,
 } from '@wordpress/block-editor';
+import { I18NToolbar } from '@wordpress/storyshare';
 
 export default function VerseEdit( {
 	attributes,
@@ -31,6 +32,7 @@ export default function VerseEdit( {
 						setAttributes( { textAlign: nextAlign } );
 					} }
 				/>
+				<I18NToolbar />
 			</BlockControls>
 			<RichText
 				tagName={ Block.pre }

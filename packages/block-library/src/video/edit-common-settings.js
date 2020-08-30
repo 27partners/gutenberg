@@ -51,21 +51,27 @@ const VideoSettings = ( { setAttributes, attributes } ) => {
 				onChange={ toggleAttribute( 'controls' ) }
 				checked={ controls }
 			/>
-			<ToggleControl
-				label={ __( 'Play inline' ) }
-				onChange={ toggleAttribute( 'playsInline' ) }
-				checked={ playsInline }
-			/>
-			<SelectControl
-				label={ __( 'Preload' ) }
-				value={ preload }
-				onChange={ ( value ) => setAttributes( { preload: value } ) }
-				options={ [
-					{ value: 'auto', label: __( 'Auto' ) },
-					{ value: 'metadata', label: __( 'Metadata' ) },
-					{ value: 'none', label: __( 'None' ) },
-				] }
-			/>
+			{
+				<ToggleControl
+					label={ __( 'Play inline' ) }
+					onChange={ toggleAttribute( 'playsInline' ) }
+					checked={ playsInline }
+				/>
+			}
+			{
+				<SelectControl
+					label={ __( 'Preload' ) }
+					value={ preload }
+					onChange={ ( value ) =>
+						setAttributes( { preload: value } )
+					}
+					options={ [
+						{ value: 'auto', label: __( 'Auto' ) },
+						{ value: 'metadata', label: __( 'Metadata' ) },
+						{ value: 'none', label: __( 'None' ) },
+					] }
+				/>
+			}
 		</>
 	);
 };

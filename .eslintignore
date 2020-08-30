@@ -19,4 +19,9 @@ packages/block-library/src/embed/embed-placeholder.js
 packages/block-library/src/image/index.js
 packages/block-library/src/quote/index.js
 packages/block-library/src/table/index.js
+packages/block-library/src/image/image.js
+packages/block-library/src/image/index.js
+packages/block-library/src/quote/index.js
+packages/block-library/src/table/index.js
+packages/block-library/src/video/edit.js
 

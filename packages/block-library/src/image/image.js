@@ -300,14 +300,16 @@ export default function Image( {
 						slug={ sizeSlug }
 						width={ width }
 						height={ height }
+						/*
 						imageSizeOptions={ imageSizeOptions }
+*/
 						isResizable={ isResizable }
 						imageWidth={ naturalWidth }
 						imageHeight={ naturalHeight }
 					/>
 				</PanelBody>
 			</InspectorControls>
-			<InspectorAdvancedControls>
+			{ /*<InspectorAdvancedControls>
 				<TextControl
 					label={ __( 'Title attribute' ) }
 					value={ title || '' }
@@ -325,7 +327,7 @@ export default function Image( {
 						</>
 					}
 				/>
-			</InspectorAdvancedControls>
+			</InspectorAdvancedControls>*/ }
 		</>
 	);
 

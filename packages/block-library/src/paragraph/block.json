@@ -18,8 +18,7 @@
 		},
 		"dropCap": {
 			"type": "boolean",
-			"default": false,
-			"i18n": true
+			"default": false
 		},
 		"placeholder": {
 			"type": "string"

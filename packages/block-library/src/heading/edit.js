@@ -15,6 +15,7 @@ import {
 	__experimentalBlock as Block,
 } from '@wordpress/block-editor';
 import { ToolbarGroup } from '@wordpress/components';
+import { I18NToolbar } from '@wordpress/storyshare';
 
 /**
  * Internal dependencies
@@ -48,6 +49,7 @@ function HeadingEdit( {
 						setAttributes( { align: nextAlign } );
 					} }
 				/>
+				<I18NToolbar />
 			</BlockControls>
 			<RichText
 				identifier="content"

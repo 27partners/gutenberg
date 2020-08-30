@@ -2,8 +2,13 @@
 	"name": "core/file",
 	"category": "media",
 	"attributes": {
+	  "i18n": {
+		"type": "object",
+		"default": {}
+	  },
 		"id": {
-			"type": "number"
+			"type": "number",
+		  "i18n": true
 		},
 		"href": {
 			"type": "string"

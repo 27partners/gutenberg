@@ -3,6 +3,7 @@
  */
 import { __, _x } from '@wordpress/i18n';
 import { blockTable as icon } from '@wordpress/icons';
+import { withI18N } from '@wordpress/storyshare';
 
 /**
  * Internal dependencies
@@ -102,7 +103,7 @@ export const settings = {
 		{ name: 'stripes', label: __( 'Stripes' ) },
 	],*/
 	transforms,
-	edit,
+	edit: withI18N( metadata )( edit ),
 	save,
 	deprecated,
 };

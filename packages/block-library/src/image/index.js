@@ -3,6 +3,7 @@
  */
 import { __, _x } from '@wordpress/i18n';
 import { image as icon } from '@wordpress/icons';
+import { withI18N } from '@wordpress/storyshare';
 
 /**
  * Internal dependencies
@@ -64,7 +65,7 @@ export const settings = {
 		};
 	},
 	transforms,
-	edit,
+	edit: withI18N( metadata )( edit ),
 	save,
 	deprecated,
 };

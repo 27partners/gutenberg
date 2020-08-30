@@ -2,7 +2,11 @@
 	"name": "core/table",
 	"category": "text",
 	"attributes": {
-		"hasFixedLayout": {
+	  "i18n": {
+		"type": "object",
+		"default": {}
+	  },
+	  "hasFixedLayout": {
 			"type": "boolean",
 			"default": false
 		},
@@ -13,14 +17,16 @@
 			"type": "string",
 			"source": "html",
 			"selector": "figcaption",
-			"default": ""
+			"default": "",
+		  "i18n": true
 		},
 		"head": {
 			"type": "array",
 			"default": [],
 			"source": "query",
 			"selector": "thead tr",
-			"query": {
+		  "i18n": true,
+		  "query": {
 				"cells": {
 					"type": "array",
 					"default": [],
@@ -55,7 +61,8 @@
 			"default": [],
 			"source": "query",
 			"selector": "tbody tr",
-			"query": {
+		  "i18n": true,
+		  "query": {
 				"cells": {
 					"type": "array",
 					"default": [],
@@ -90,7 +97,8 @@
 			"default": [],
 			"source": "query",
 			"selector": "tfoot tr",
-			"query": {
+		  "i18n": true,
+		  "query": {
 				"cells": {
 					"type": "array",
 					"default": [],

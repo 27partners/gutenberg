@@ -20,6 +20,7 @@ import {
 import { Component } from '@wordpress/element';
 import { __, _x } from '@wordpress/i18n';
 import { file as icon } from '@wordpress/icons';
+import { I18NToolbar } from '@wordpress/storyshare';
 
 /**
  * Internal dependencies
@@ -192,6 +193,7 @@ class FileEdit extends Component {
 						onSelect={ this.onSelectFile }
 						onError={ this.onUploadError }
 					/>
+					<I18NToolbar />
 				</BlockControls>
 				<Animate type={ isBlobURL( href ) ? 'loading' : null }>
 					{ ( { className: animateClassName } ) => (

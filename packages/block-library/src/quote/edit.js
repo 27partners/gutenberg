@@ -14,6 +14,7 @@ import {
 } from '@wordpress/block-editor';
 import { BlockQuotation } from '@wordpress/components';
 import { createBlock } from '@wordpress/blocks';
+import { I18NToolbar } from '@wordpress/storyshare';
 
 export default function QuoteEdit( {
 	attributes,
@@ -35,6 +36,7 @@ export default function QuoteEdit( {
 						setAttributes( { align: nextAlign } );
 					} }
 				/>
+				<I18NToolbar />
 			</BlockControls>
 			<BlockQuotation
 				className={ classnames( className, {

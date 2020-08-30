@@ -3,6 +3,7 @@
  */
 import { __ } from '@wordpress/i18n';
 import { verse as icon } from '@wordpress/icons';
+import { withI18N } from '@wordpress/storyshare';
 
 /**
  * Internal dependencies
@@ -41,6 +42,6 @@ export const settings = {
 			content: attributes.content + attributesToMerge.content,
 		};
 	},
-	edit,
+	edit: withI18N( metadata )( edit ),
 	save,
 };

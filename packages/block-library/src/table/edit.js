@@ -41,6 +41,7 @@ import {
 	table,
 } from '@wordpress/icons';
 import { createBlock } from '@wordpress/blocks';
+import { I18NToolbar } from '@wordpress/storyshare';
 
 /**
  * Internal dependencies
@@ -619,6 +620,7 @@ export class TableEdit extends Component {
 						}
 						onHover={ this.onHoverAlignment }
 					/>
+					<I18NToolbar />
 				</BlockControls>
 				<InspectorControls>
 					<PanelBody

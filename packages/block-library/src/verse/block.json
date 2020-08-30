@@ -2,12 +2,17 @@
 	"name": "core/verse",
 	"category": "text",
 	"attributes": {
+	  "i18n": {
+		"type": "object",
+		"default": {}
+	  },
 		"content": {
 			"type": "string",
 			"source": "html",
 			"selector": "pre",
 			"default": "",
-			"__unstablePreserveWhiteSpace": true
+			"__unstablePreserveWhiteSpace": true,
+		  "i18n": true
 		},
 		"textAlign": {
 			"type": "string"

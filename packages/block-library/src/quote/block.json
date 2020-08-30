@@ -2,18 +2,24 @@
 	"name": "core/quote",
 	"category": "text",
 	"attributes": {
-		"value": {
+	  "i18n": {
+		"type": "object",
+		"default": {}
+	  },
+	  "value": {
 			"type": "string",
 			"source": "html",
 			"selector": "blockquote",
 			"multiline": "p",
-			"default": ""
-		},
+			"default": "",
+		"i18n": true
+	  },
 		"citation": {
 			"type": "string",
 			"source": "html",
 			"selector": "cite",
-			"default": ""
+			"default": "",
+		  "i18n": true
 		},
 		"align": {
 			"type": "string"

@@ -20,6 +20,7 @@ import {
 import { useEffect, useRef } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { image as icon } from '@wordpress/icons';
+import { I18NToolbar } from '@wordpress/storyshare';
 
 /**
  * Internal dependencies
@@ -222,6 +223,7 @@ export function ImageEdit( {
 				value={ align }
 				onChange={ updateAlignment }
 			/>
+			<I18NToolbar />
 		</BlockControls>
 	);
 	const src = isExternal ? url : undefined;

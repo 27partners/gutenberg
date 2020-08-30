@@ -2,7 +2,12 @@
 	"name": "core/list",
 	"category": "text",
 	"attributes": {
-		"ordered": {
+	  "i18n": {
+		"type": "object",
+		"default": {}
+	  },
+
+	  "ordered": {
 			"type": "boolean",
 			"default": false
 		},
@@ -15,7 +20,8 @@
 				"ol",
 				"ul"
 			],
-			"default": ""
+			"default": "",
+		  "i18n": true
 		},
 		"type": {
 			"type": "string"

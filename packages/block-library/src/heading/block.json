@@ -2,14 +2,19 @@
 	"name": "core/heading",
 	"category": "text",
 	"attributes": {
-		"align": {
+	  "i18n": {
+		"type": "object",
+		"default": {}
+	  },
+	  "align": {
 			"type": "string"
 		},
 		"content": {
 			"type": "string",
 			"source": "html",
 			"selector": "h1,h2,h3,h4,h5,h6",
-			"default": ""
+			"default": "",
+		  "i18n": true
 		},
 		"level": {
 			"type": "number",

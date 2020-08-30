@@ -26,6 +26,7 @@ import { compose, withInstanceId } from '@wordpress/compose';
 import { withSelect } from '@wordpress/data';
 import { video as icon } from '@wordpress/icons';
 import { createBlock } from '@wordpress/blocks';
+import { I18NToolbar } from '@wordpress/storyshare';
 
 /**
  * Internal dependencies
@@ -73,7 +74,10 @@ class VideoEdit extends Component {
 	}
 
 	componentDidUpdate( prevProps ) {
-		if ( this.props.attributes.poster !== prevProps.attributes.poster ) {
+		if (
+			this.videoPlayer.current &&
+			this.props.attributes.poster !== prevProps.attributes.poster
+		) {
 			this.videoPlayer.current.load();
 		}
 	}
@@ -167,13 +171,14 @@ class VideoEdit extends Component {
 						onSelectURL={ this.onSelectURL }
 						onError={ this.onUploadError }
 					/>
+					<I18NToolbar />
 				</BlockControls>
 				<InspectorControls>
 					<PanelBody title={ __( 'Video settings' ) }>
-						<VideoCommonSettings
+						{ /*<VideoCommonSettings
 							setAttributes={ setAttributes }
 							attributes={ attributes }
-						/>
+						/>*/ }
 						<MediaUploadCheck>
 							<BaseControl className="editor-video-poster-control">
 								<BaseControl.VisualLabel>

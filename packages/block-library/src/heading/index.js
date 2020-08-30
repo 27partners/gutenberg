@@ -8,6 +8,7 @@ import { isEmpty } from 'lodash';
  */
 import { heading as icon } from '@wordpress/icons';
 import { __, sprintf } from '@wordpress/i18n';
+import { withI18N } from '@wordpress/storyshare';
 
 /**
  * Internal dependencies
@@ -62,6 +63,6 @@ export const settings = {
 				( attributesToMerge.content || '' ),
 		};
 	},
-	edit,
+	edit: withI18N( metadata )( edit ),
 	save,
 };

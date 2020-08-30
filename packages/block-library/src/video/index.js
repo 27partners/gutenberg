@@ -3,6 +3,7 @@
  */
 import { __ } from '@wordpress/i18n';
 import { video as icon } from '@wordpress/icons';
+import { withI18N } from '@wordpress/storyshare';
 
 /**
  * Internal dependencies
@@ -24,6 +25,6 @@ export const settings = {
 	icon,
 	keywords: [ __( 'movie' ) ],
 	transforms,
-	edit,
+	edit: withI18N( metadata )( edit ),
 	save,
 };

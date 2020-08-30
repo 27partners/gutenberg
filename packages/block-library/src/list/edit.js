@@ -30,6 +30,7 @@ import {
 	formatOutdentRTL,
 } from '@wordpress/icons';
 import { useSelect } from '@wordpress/data';
+import { I18NToolbar } from '@wordpress/storyshare';
 
 /**
  * Internal dependencies
@@ -150,6 +151,7 @@ export default function ListEdit( {
 						},
 					] }
 				/>
+				<I18NToolbar />
 			</BlockControls>
 		</>
 	);

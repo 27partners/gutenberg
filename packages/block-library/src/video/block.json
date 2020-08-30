@@ -2,7 +2,11 @@
 	"name": "core/video",
 	"category": "media",
 	"attributes": {
-		"autoplay": {
+	  "i18n": {
+		"type": "object",
+		"default": {}
+	  },
+	  "autoplay": {
 			"type": "boolean",
 			"source": "attribute",
 			"selector": "video",
@@ -11,7 +15,8 @@
 		"caption": {
 			"type": "string",
 			"source": "html",
-			"selector": "figcaption"
+			"selector": "figcaption",
+		  "i18n": true
 		},
 		"controls": {
 			"type": "boolean",
@@ -21,7 +26,8 @@
 			"default": true
 		},
 		"id": {
-			"type": "number"
+			"type": "number",
+		  "i18n": true
 		},
 		"loop": {
 			"type": "boolean",
@@ -39,7 +45,8 @@
 			"type": "string",
 			"source": "attribute",
 			"selector": "video",
-			"attribute": "poster"
+			"attribute": "poster",
+		  "i18n": true
 		},
 		"preload": {
 			"type": "string",
@@ -52,7 +59,8 @@
 			"type": "string",
 			"source": "attribute",
 			"selector": "video",
-			"attribute": "src"
+			"attribute": "src",
+		    "i18n": true
 		},
 		"playsInline": {
 			"type": "boolean",

@@ -3,6 +3,7 @@
  */
 import { __, _x } from '@wordpress/i18n';
 import { quote as icon } from '@wordpress/icons';
+import { withI18N } from '@wordpress/storyshare';
 
 /**
  * Internal dependencies
@@ -41,7 +42,7 @@ export const settings = {
 		{ name: 'large', label: _x( 'Large', 'block style' ) },
 	],*/
 	transforms,
-	edit,
+	edit: withI18N( metadata )( edit ),
 	save,
 	merge( attributes, { value, citation } ) {
 		// Quote citations cannot be merged. Pick the second one unless it's
