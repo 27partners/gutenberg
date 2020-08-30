@@ -20,7 +20,7 @@
 		}
 	},
 	"supports": {
-		"anchor": true,
+		"anchor": false,
 		"className": false,
 		"lightBlockWrapper": true,
 		"__experimentalColor": {

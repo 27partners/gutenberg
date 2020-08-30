@@ -38,7 +38,7 @@ const EmbedPlaceholder = ( props ) => {
 					{ _x( 'Embed', 'button label' ) }
 				</Button>
 			</form>
-			<div className="components-placeholder__learn-more">
+			{ /*<div className="components-placeholder__learn-more">
 				<ExternalLink
 					href={ __(
 						'https://wordpress.org/support/article/embeds/'
@@ -46,7 +46,7 @@ const EmbedPlaceholder = ( props ) => {
 				>
 					{ __( 'Learn more about embeds' ) }
 				</ExternalLink>
-			</div>
+			</div>*/ }
 			{ cannotEmbed && (
 				<div className="components-placeholder__error">
 					<div className="components-placeholder__instructions">

@@ -62,7 +62,7 @@
 		}
 	},
 	"supports": {
-		"anchor": true,
+		"anchor": false,
 		"align": true,
 		"lightBlockWrapper": true
 	}

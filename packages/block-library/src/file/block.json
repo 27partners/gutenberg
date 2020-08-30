@@ -36,7 +36,7 @@
 		}
 	},
 	"supports": {
-		"anchor": true,
+		"anchor": false,
 		"align": true
 	}
 }

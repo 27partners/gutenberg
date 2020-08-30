@@ -93,14 +93,14 @@ export const settings = {
 			],
 		},
 	},
-	styles: [
+	/*styles: [
 		{
 			name: 'regular',
 			label: _x( 'Default', 'block style' ),
 			isDefault: true,
 		},
 		{ name: 'stripes', label: __( 'Stripes' ) },
-	],
+	],*/
 	transforms,
 	edit,
 	save,

@@ -223,15 +223,15 @@ export class MediaPlaceholder extends Component {
 
 				if ( isAudio ) {
 					instructions = __(
-						'Upload an audio file, pick one from your media library, or add one with a URL.'
+						'Upload an audio file, or pick one from your media library'
 					);
 				} else if ( isImage ) {
 					instructions = __(
-						'Upload an image file, pick one from your media library, or add one with a URL.'
+						'Upload an image file, or pick one from your media library'
 					);
 				} else if ( isVideo ) {
 					instructions = __(
-						'Upload a video file, pick one from your media library, or add one with a URL.'
+						'Upload a video file, or	 pick one from your media library'
 					);
 				}
 			}
@@ -392,7 +392,9 @@ export class MediaPlaceholder extends Component {
 										{ __( 'Upload' ) }
 									</Button>
 									{ mediaLibraryButton }
+									{ /*
 									{ this.renderUrlSelectionUI() }
+*/ }
 									{ this.renderCancelLink() }
 								</>
 							);
@@ -423,7 +425,9 @@ export class MediaPlaceholder extends Component {
 						{ __( 'Upload' ) }
 					</FormFileUpload>
 					{ mediaLibraryButton }
+					{ /*
 					{ this.renderUrlSelectionUI() }
+*/ }
 					{ this.renderCancelLink() }
 				</>
 			);
@@ -454,7 +458,8 @@ export class MediaPlaceholder extends Component {
 		return (
 			<MediaUploadCheck
 				fallback={ this.renderPlaceholder(
-					this.renderUrlSelectionUI()
+					/*this.renderUrlSelectionUI()*/
+					this.renderMediaUploadChecked()
 				) }
 			>
 				{ this.renderMediaUploadChecked() }

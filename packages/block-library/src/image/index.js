@@ -33,14 +33,14 @@ export const settings = {
 			caption: __( 'Mont Blanc appears—still, snowy, and serene.' ),
 		},
 	},
-	styles: [
+	/*styles: [
 		{
 			name: 'default',
 			label: _x( 'Default', 'block style' ),
 			isDefault: true,
 		},
 		{ name: 'rounded', label: _x( 'Rounded', 'block style' ) },
-	],
+	],*/
 	__experimentalLabel( attributes, { context } ) {
 		if ( context === 'accessibility' ) {
 			const { caption, alt, url } = attributes;

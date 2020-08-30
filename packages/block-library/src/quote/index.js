@@ -32,14 +32,14 @@ export const settings = {
 			className: 'is-style-large',
 		},
 	},
-	styles: [
+	/*styles: [
 		{
 			name: 'default',
 			label: _x( 'Default', 'block style' ),
 			isDefault: true,
 		},
 		{ name: 'large', label: _x( 'Large', 'block style' ) },
-	],
+	],*/
 	transforms,
 	edit,
 	save,

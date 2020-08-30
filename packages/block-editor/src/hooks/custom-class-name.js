@@ -58,7 +58,7 @@ export const withInspectorControl = createHigherOrderComponent(
 			const hasCustomClassName = hasBlockSupport(
 				props.name,
 				'customClassName',
-				true
+				false
 			);
 			if ( hasCustomClassName && props.isSelected ) {
 				return (

@@ -14,3 +14,9 @@ packages/block-library/src/file/inspector.js
 packages/edit-post/src/components/sidebar/settings-sidebar/index.js
 packages/edit-post/src/components/visual-editor/index.js
 packages/edit-post/src/plugins/index.js
+packages/block-editor/src/components/media-placeholder/index.js
+packages/block-library/src/embed/embed-placeholder.js
+packages/block-library/src/image/index.js
+packages/block-library/src/quote/index.js
+packages/block-library/src/table/index.js
+
