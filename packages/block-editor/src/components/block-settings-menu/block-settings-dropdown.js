@@ -165,12 +165,12 @@ export function BlockSettingsDropdown( {
 										{ __( 'Move To' ) }
 									</MenuItem>
 								) }
-								{ count === 1 && (
+								{ /*{ count === 1 && (
 									<BlockModeToggle
 										clientId={ firstBlockClientId }
 										onToggle={ onClose }
 									/>
-								) }
+								) }*/ }
 							</MenuGroup>
 							<BlockSettingsMenuControls.Slot
 								fillProps={ { onClose } }

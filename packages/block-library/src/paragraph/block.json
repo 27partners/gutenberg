@@ -42,7 +42,7 @@
 		"__experimentalLineHeight": true,
 		"__experimentalFeatures": {
 			"typography": {
-				"dropCap": true
+				"dropCap": false
 			}
 		},
 		"__experimentalSelector": "p",

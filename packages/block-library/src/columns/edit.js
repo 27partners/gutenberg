@@ -66,10 +66,10 @@ function ColumnsEditContainer( {
 	return (
 		<>
 			<BlockControls>
-				<BlockVerticalAlignmentToolbar
+				{ /*<BlockVerticalAlignmentToolbar
 					onChange={ updateAlignment }
 					value={ verticalAlignment }
-				/>
+				/>*/ }
 			</BlockControls>
 			<InspectorControls>
 				<PanelBody>

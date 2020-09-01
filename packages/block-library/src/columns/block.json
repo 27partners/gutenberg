@@ -7,16 +7,8 @@
 		}
 	},
 	"supports": {
-		"anchor": true,
-		"align": [
-			"wide",
-			"full"
-		],
+		"anchor": false,
 		"html": false,
-		"lightBlockWrapper": true,
-		"__experimentalColor": {
-			"gradients": true,
-			"linkColor": true
-		}
+		"lightBlockWrapper": true
 	}
 }

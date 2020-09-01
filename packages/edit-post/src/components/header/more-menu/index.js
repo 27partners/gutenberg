@@ -33,7 +33,9 @@ const MoreMenu = () => (
 		{ ( { onClose } ) => (
 			<>
 				<WritingMenu />
+				{ /*
 				<ModeSwitcher />
+*/ }
 				<ActionItem.Slot
 					name="core/edit-post/plugin-more-menu"
 					label={ __( 'Plugins' ) }
