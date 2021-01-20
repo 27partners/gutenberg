@@ -161,14 +161,19 @@ module.exports = {
 				},
 			} ) )
 		),
-		new CopyWebpackPlugin( [
+		new CopyWebpackPlugin(
+			Object.entries( {
+				'./packages/block-library/src/': 'build/block-library/blocks/',
+				'./packages/edit-widgets/src/blocks/':
+					'build/edit-widgets/blocks/',
+			} ).flatMap( ( [ from, to ] ) => [
 			{
-				from: './packages/block-library/src/**/index.php',
-				test: new RegExp(
-					`([\\w-]+)${ escapeRegExp( sep ) }index\\.php$`
-				),
-				to: 'build/block-library/blocks/[1].php',
-				transform( content ) {
+					from: `${ from }/**/index.php`,
+					test: new RegExp(
+						`([\\w-]+)${ escapeRegExp( sep ) }index\\.php$`
+					),
+					to: `${ to }/[1].php`,
+					transform: ( content ) => {
 					content = content.toString();
 
 					// Within content, search for any function definitions. For
@@ -205,17 +210,19 @@ module.exports = {
 				},
 			},
 			{
-				from: './packages/block-library/src/*/block.json',
-				test: new RegExp(
-					`([\\w-]+)${ escapeRegExp( sep ) }block\\.json$`
-				),
-				to: 'build/block-library/blocks/[1]/block.json',
-			},
-		] ),
+					from: `${ from }/*/block.json`,
+					test: new RegExp(
+						`([\\w-]+)${ escapeRegExp( sep ) }block\\.json$`
+					),
+					to: `${ to }/[1]/block.json`,
+				},
+			] )
+		),
 		new DependencyExtractionWebpackPlugin( { injectPolyfill: true } ),
 	].filter( Boolean ),
 	watchOptions: {
 		ignored: '!packages/*/!(src)/**/*',
+		aggregateTimeout: 500,
 	},
 	devtool,
 };

@@ -15,9 +15,11 @@ import {
 	forwardRef,
 } from '@wordpress/element';
 import { focus, isTextField, placeCaretAtHorizontalEdge } from '@wordpress/dom';
-import { ENTER } from '@wordpress/keycodes';
+import { ENTER, BACKSPACE, DELETE } from '@wordpress/keycodes';
 import { __, sprintf } from '@wordpress/i18n';
 import { useSelect, useDispatch } from '@wordpress/data';
+import deprecated from '@wordpress/deprecated';
+import { __unstableGetBlockProps as getBlockProps } from '@wordpress/blocks';
 
 /**
  * Internal dependencies
@@ -28,11 +30,25 @@ import { Context, SetBlockNodes } from './root-container';
 import { BlockListBlockContext } from './block';
 import ELEMENTS from './block-wrapper-elements';
 
-const BlockComponent = forwardRef(
-	(
-		{ children, tagName: TagName = 'div', __unstableIsHtml, ...props },
-		wrapper
-	) => {
+/**
+ * This hook is used to lightly mark an element as a block element. The element
+ * should be the outermost element of a block. Call this hook and pass the
+ * returned props to the element to mark as a block. If you define a ref for the
+ * element, it is important to pass the ref to this hook, which the hook in turn
+ * will pass to the component through the props it returns. Optionally, you can
+ * also pass any other props through this hook, and they will be merged and
+ * returned.
+ *
+ * @param {Object}  props   Optional. Props to pass to the element. Must contain
+ *                          the ref if one is defined.
+ * @param {Object}  options Options for internal use only.
+ * @param {boolean} options.__unstableIsHtml
+ *
+ * @return {Object} Props to pass to the element to mark as a block.
+ */
+export function useBlockProps( props = {}, { __unstableIsHtml } = {} ) {
+	const fallbackRef = useRef();
+	const ref = props.ref || fallbackRef;
 		const onSelectionStart = useContext( Context );
 		const setBlockNodes = useContext( SetBlockNodes );
 		const {
@@ -45,11 +61,10 @@ const BlockComponent = forwardRef(
 			enableAnimation,
 			index,
 			className,
-			isLocked,
-			name,
-			mode,
-			blockTitle,
-			wrapperProps,
+		name,
+		mode,
+		blockTitle,
+		wrapperProps = {},
 		} = useContext( BlockListBlockContext );
 		const {
 			initialPosition,
@@ -71,15 +86,14 @@ const BlockComponent = forwardRef(
 					initialPosition: isSelected
 						? getSelectedBlocksInitialCaretPosition()
 						: undefined,
+				isNavigationMode: _isNavigationMode,
 				};
 			},
 			[ isSelected ]
 		);
-		const { insertDefaultBlock } = useDispatch( 'core/block-editor' );
-		const fallbackRef = useRef();
-		const isAligned = wrapperProps && !! wrapperProps[ 'data-align' ];
-		wrapper = wrapper || fallbackRef;
-
+	const { insertDefaultBlock, removeBlock } = useDispatch(
+		'core/block-editor'
+	);
 		const [ isHovered, setHovered ] = useState( false );
 
 		// Provide the selected node, or the first and last nodes of a multi-
@@ -88,7 +102,7 @@ const BlockComponent = forwardRef(
 		// are no longer selected.
 		useEffect( () => {
 			if ( isSelected || isFirstMultiSelected || isLastMultiSelected ) {
-				const node = wrapper.current;
+			const node = ref.current;
 				setBlockNodes( ( nodes ) => ( {
 					...nodes,
 					[ clientId ]: node,
@@ -99,6 +113,20 @@ const BlockComponent = forwardRef(
 			}
 		}, [ isSelected, isFirstMultiSelected, isLastMultiSelected ] );
 
+	// Set new block node if it changes.
+	// This effect should happen on every render, so no dependencies should be
+	// added.
+	useEffect( () => {
+		const node = ref.current;
+		setBlockNodes( ( nodes ) => {
+			if ( ! nodes[ clientId ] || nodes[ clientId ] === node ) {
+				return nodes;
+			}
+
+			return { ...nodes, [ clientId ]: node };
+		} );
+	} );
+
 		// translators: %s: Type of block (i.e. Text, Image etc)
 		const blockLabel = sprintf( __( 'Block: %s' ), blockTitle );
 
@@ -108,25 +136,25 @@ const BlockComponent = forwardRef(
 		 * When a block becomes selected, transition focus to an inner tabbable.
 		 */
 		const focusTabbable = () => {
+		const { ownerDocument } = ref.current;
+
 			// Focus is captured by the wrapper node, so while focus transition
 			// should only consider tabbables within editable display, since it
 			// may be the wrapper itself or a side control which triggered the
 			// focus event, don't unnecessary transition to an inner tabbable.
 			if (
-				document.activeElement &&
-				isInsideRootBlock( wrapper.current, document.activeElement )
+			ownerDocument.activeElement &&
+			isInsideRootBlock( ref.current, ownerDocument.activeElement )
 			) {
 				return;
 			}
 
 			// Find all tabbables within node.
-			const textInputs = focus.tabbable
-				.find( wrapper.current )
-				.filter( isTextField )
+		const textInputs = focus.tabbable.find( ref.current ).filter(
+			( node ) =>
+				isTextField( node ) &&
 				// Exclude inner blocks and block appenders
-				.filter(
-					( node ) =>
-						isInsideRootBlock( wrapper.current, node ) &&
+				isInsideRootBlock( ref.current, node ) &&
 						! node.closest( '.block-list-appender' )
 				);
 
@@ -134,7 +162,7 @@ const BlockComponent = forwardRef(
 			// tabbables.
 			const isReverse = -1 === initialPosition;
 			const target =
-				( isReverse ? last : first )( textInputs ) || wrapper.current;
+			( isReverse ? last : first )( textInputs ) || ref.current;
 
 			placeCaretAtHorizontalEdge( target, isReverse );
 		};
@@ -147,33 +175,39 @@ const BlockComponent = forwardRef(
 
 		// Block Reordering animation
 		useMovingAnimation(
-			wrapper,
+		ref,
 			isSelected || isPartOfMultiSelection,
 			isSelected || isFirstMultiSelected,
 			enableAnimation,
 			index
 		);
 
+	useEffect( () => {
+		if ( ! isSelected ) {
+			return;
+		}
+
 		/**
-		 * Interprets keydown event intent to remove or insert after block if key
-		 * event occurs on wrapper node. This can occur when the block has no text
-		 * fields of its own, particularly after initial insertion, to allow for
-		 * easy deletion and continuous writing flow to add additional content.
+		 * Interprets keydown event intent to remove or insert after block if
+		 * key event occurs on wrapper node. This can occur when the block has
+		 * no text fields of its own, particularly after initial insertion, to
+		 * allow for easy deletion and continuous writing flow to add additional
+		 * content.
 		 *
 		 * @param {KeyboardEvent} event Keydown event.
 		 */
-		const onKeyDown = ( event ) => {
+		function onKeyDown( event ) {
 			const { keyCode, target } = event;
 
-			if ( props.onKeyDown ) {
-				props.onKeyDown( event );
-			}
-
-			if ( keyCode !== ENTER ) {
+			if (
+				keyCode !== ENTER &&
+				keyCode !== BACKSPACE &&
+				keyCode !== DELETE
+			) {
 				return;
 			}
 
-			if ( target !== wrapper.current || isTextField( target ) ) {
+			if ( target !== ref.current || isTextField( target ) ) {
 				return;
 			}
 
@@ -181,23 +215,32 @@ const BlockComponent = forwardRef(
 
 			if ( keyCode === ENTER ) {
 				insertDefaultBlock( {}, rootClientId, index + 1 );
+			} else {
+				removeBlock( clientId );
 			}
-		};
+		}
 
-		const onMouseLeave = ( { which, buttons } ) => {
-			// The primary button must be pressed to initiate selection. Fall back
-			// to `which` if the standard `buttons` property is falsy. There are
-			// cases where Firefox might always set `buttons` to `0`.
+		function onMouseLeave( { buttons } ) {
+			// The primary button must be pressed to initiate selection.
 			// See https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/buttons
-			// See https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/which
-			if ( ( buttons || which ) === 1 ) {
+			if ( buttons === 1 ) {
 				onSelectionStart( clientId );
 			}
-		};
+		}
 
-		const htmlSuffix =
-			mode === 'html' && ! __unstableIsHtml ? '-visual' : '';
-		const blockElementId = `block-${ clientId }${ htmlSuffix }`;
+		ref.current.addEventListener( 'keydown', onKeyDown );
+		ref.current.addEventListener( 'mouseleave', onMouseLeave );
+
+		return () => {
+			ref.current.removeEventListener( 'mouseleave', onMouseLeave );
+			ref.current.removeEventListener( 'keydown', onKeyDown );
+		};
+	}, [ isSelected, onSelectionStart, insertDefaultBlock, removeBlock ] );
+
+	useEffect( () => {
+		if ( ! isNavigationMode ) {
+			return;
+		}
 
 		function onMouseOver( event ) {
 			if ( event.defaultPrevented ) {
@@ -227,44 +270,52 @@ const BlockComponent = forwardRef(
 			setHovered( false );
 		}
 
-		return (
-			// eslint-disable-next-line jsx-a11y/mouse-events-have-key-events
-			<TagName
-				// Overrideable props.
-				aria-label={ blockLabel }
-				role="group"
-				{ ...omit( wrapperProps, [ 'data-align' ] ) }
-				{ ...props }
-				id={ blockElementId }
-				ref={ wrapper }
-				className={ classnames(
-					className,
-					props.className,
-					wrapperProps && wrapperProps.className,
-					{
-						'is-hovered': isHovered,
-						'wp-block': ! isAligned,
-					}
-				) }
-				data-block={ clientId }
-				data-type={ name }
-				data-title={ blockTitle }
-				// Only allow shortcuts when a blocks is selected and not locked.
-				onKeyDown={ isSelected && ! isLocked ? onKeyDown : undefined }
-				// Only allow selection to be started from a selected block.
-				onMouseLeave={ isSelected ? onMouseLeave : undefined }
-				// No need to have these listeners for hover class in edit mode.
-				onMouseOver={ isNavigationMode ? onMouseOver : undefined }
-				onMouseOut={ isNavigationMode ? onMouseOut : undefined }
-				tabIndex="0"
-				style={ {
-					...( wrapperProps ? wrapperProps.style : {} ),
-					...( props.style || {} ),
-				} }
-			>
-				{ children }
-			</TagName>
-		);
+		ref.current.addEventListener( 'mouseover', onMouseOver );
+		ref.current.addEventListener( 'mouseout', onMouseOut );
+
+		return () => {
+			ref.current.removeEventListener( 'mouseover', onMouseOver );
+			ref.current.removeEventListener( 'mouseout', onMouseOut );
+		};
+	}, [ isNavigationMode, isHovered, setHovered ] );
+
+	const htmlSuffix = mode === 'html' && ! __unstableIsHtml ? '-visual' : '';
+
+	return {
+		...wrapperProps,
+		...props,
+		ref,
+		id: `block-${ clientId }${ htmlSuffix }`,
+		tabIndex: 0,
+		role: 'group',
+		'aria-label': blockLabel,
+		'data-block': clientId,
+		'data-type': name,
+		'data-title': blockTitle,
+		className: classnames(
+			className,
+			props.className,
+			wrapperProps.className,
+			{ 'is-hovered': isHovered }
+		),
+		style: { ...wrapperProps.style, ...props.style },
+	};
+}
+
+/**
+ * Call within a save function to get the props for the block wrapper.
+ *
+ * @param {Object} props Optional. Props to pass to the element.
+ */
+useBlockProps.save = getBlockProps;
+
+const BlockComponent = forwardRef(
+	( { children, tagName: TagName = 'div', ...props }, ref ) => {
+		deprecated( 'wp.blockEditor.__experimentalBlock', {
+			alternative: 'wp.blockEditor.useBlockProps',
+		} );
+		const blockProps = useBlockProps( { ...props, ref } );
+		return <TagName { ...blockProps }>{ children }</TagName>;
 	}
 );
 

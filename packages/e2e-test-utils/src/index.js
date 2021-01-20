@@ -21,6 +21,7 @@ export { getAllBlocks } from './get-all-blocks';
 export { getAvailableBlockTransforms } from './get-available-block-transforms';
 export { getBlockSetting } from './get-block-setting';
 export { getEditedPostContent } from './get-edited-post-content';
+export { getCurrentPostContent } from './get-current-post-content';
 export { hasBlockSwitcher } from './has-block-switcher';
 export { getPageError } from './get-page-error';
 export {
@@ -30,6 +31,7 @@ export {
 	searchForBlock,
 	searchForPattern,
 	searchForReusableBlock,
+	insertBlockDirectoryBlock,
 	openGlobalBlockInserter,
 	closeGlobalBlockInserter,
 } from './inserter';
@@ -45,7 +47,10 @@ export { openDocumentSettingsSidebar } from './open-document-settings-sidebar';
 export { openPublishPanel } from './open-publish-panel';
 export { trashAllPosts } from './posts';
 export { pressKeyTimes } from './press-key-times';
-export { pressKeyWithModifier } from './press-key-with-modifier';
+export {
+	pressKeyWithModifier,
+	setClipboardData,
+} from './press-key-with-modifier';
 export { publishPost } from './publish-post';
 export { publishPostWithPrePublishChecksDisabled } from './publish-post-with-pre-publish-checks-disabled';
 export { saveDraft } from './save-draft';

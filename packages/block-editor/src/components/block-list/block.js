@@ -2,11 +2,17 @@
  * External dependencies
  */
 import classnames from 'classnames';
+import { omit } from 'lodash';
 
 /**
  * WordPress dependencies
  */
-import { useState, createContext, useMemo } from '@wordpress/element';
+import {
+	useState,
+	createContext,
+	useMemo,
+	useCallback,
+} from '@wordpress/element';
 import {
 	getBlockType,
 	getSaveElement,
@@ -23,8 +29,12 @@ import {
 	useSelect,
 	useDispatch,
 } from '@wordpress/data';
-import { withViewportMatch } from '@wordpress/viewport';
-import { compose, pure, ifCondition } from '@wordpress/compose';
+import {
+	compose,
+	pure,
+	ifCondition,
+	useViewportMatch,
+} from '@wordpress/compose';
 
 /**
  * Internal dependencies
@@ -34,7 +44,7 @@ import BlockInvalidWarning from './block-invalid-warning';
 import BlockCrashWarning from './block-crash-warning';
 import BlockCrashBoundary from './block-crash-boundary';
 import BlockHtml from './block-html';
-import { Block } from './block-wrapper';
+import { useBlockProps } from './block-wrapper';
 
 export const BlockListBlockContext = createContext();
 
@@ -62,9 +72,16 @@ function mergeWrapperProps( propsA, propsB ) {
 	return newProps;
 }
 
+function Block( { children, isHtml, ...props } ) {
+	return (
+		<div { ...useBlockProps( props, { __unstableIsHtml: isHtml } ) }>
+			{ children }
+		</div>
+	);
+}
+
 function BlockListBlock( {
 	mode,
-	isFocusMode,
 	isLocked,
 	clientId,
 	rootClientId,
@@ -88,35 +105,38 @@ function BlockListBlock( {
 	toggleSelection,
 	index,
 	enableAnimation,
+	activeEntityBlockId,
 } ) {
+	const isLargeViewport = useViewportMatch( 'medium' );
 	// In addition to withSelect, we should favor using useSelect in this
 	// component going forward to avoid leaking new props to the public API
 	// (editor.BlockListBlock filter)
-	const { isDragging, isHighlighted } = useSelect(
+	const { isDragging, isHighlighted, isFocusMode } = useSelect(
 		( select ) => {
-			const { isDraggingBlocks, isBlockHighlighted } = select(
-				'core/block-editor'
-			);
+			const {
+				isBlockBeingDragged,
+				isBlockHighlighted,
+				getSettings,
+			} = select( 'core/block-editor' );
 			return {
-				isDragging: isDraggingBlocks(),
+				isDragging: isBlockBeingDragged( clientId ),
 				isHighlighted: isBlockHighlighted( clientId ),
+				isFocusMode: getSettings().focusMode,
 			};
 		},
 		[ clientId ]
 	);
 	const { removeBlock } = useDispatch( 'core/block-editor' );
-	const onRemove = () => removeBlock( clientId );
+	const onRemove = useCallback( () => removeBlock( clientId ), [ clientId ] );
 
 	// Handling the error state
 	const [ hasError, setErrorState ] = useState( false );
 	const onBlockError = () => setErrorState( true );
 
 	const blockType = getBlockType( name );
-	const lightBlockWrapper = hasBlockSupport(
-		blockType,
-		'lightBlockWrapper',
-		false
-	);
+	const lightBlockWrapper =
+		blockType.apiVersion > 1 ||
+		hasBlockSupport( blockType, 'lightBlockWrapper', false );
 	const isUnregisteredBlock = name === getUnregisteredTypeHandlerName();
 
 	// Determine whether the block has props to apply to the wrapper.
@@ -144,7 +164,7 @@ function BlockListBlock( {
 		{
 			'wp-block': ! isAligned,
 			'has-warning': ! isValid || !! hasError || isUnregisteredBlock,
-			'is-selected': isSelected,
+			'is-selected': isSelected && ! isDragging,
 			'is-highlighted': isHighlighted,
 			'is-multi-selected': isMultiSelected,
 			'is-reusable': isReusableBlock( blockType ),
@@ -152,9 +172,12 @@ function BlockListBlock( {
 				isDragging && ( isSelected || isPartOfMultiSelection ),
 			'is-typing': isTypingWithinBlock,
 			'is-focused':
-				isFocusMode && ( isSelected || isAncestorOfSelectedBlock ),
-			'is-focus-mode': isFocusMode,
-			'has-child-selected': isAncestorOfSelectedBlock,
+				isFocusMode &&
+				isLargeViewport &&
+				( isSelected || isAncestorOfSelectedBlock ),
+			'is-focus-mode': isFocusMode && isLargeViewport,
+			'has-child-selected': isAncestorOfSelectedBlock && ! isDragging,
+			'is-active-entity': activeEntityBlockId === clientId,
 		},
 		className
 	);
@@ -192,10 +215,6 @@ function BlockListBlock( {
 		);
 	}
 
-	if ( mode !== 'visual' ) {
-		blockEdit = <div style={ { display: 'none' } }>{ blockEdit }</div>;
-	}
-
 	const value = {
 		clientId,
 		rootClientId,
@@ -210,49 +229,51 @@ function BlockListBlock( {
 		name,
 		mode,
 		blockTitle: blockType.title,
-		wrapperProps,
+		wrapperProps: omit( wrapperProps, [ 'data-align' ] ),
 	};
 	const memoizedValue = useMemo( () => value, Object.values( value ) );
+
+	let block;
+
+	if ( ! isValid ) {
+		block = (
+			<Block>
+				<BlockInvalidWarning clientId={ clientId } />
+				<div>{ getSaveElement( blockType, attributes ) }</div>
+			</Block>
+		);
+	} else if ( mode === 'html' ) {
+		// Render blockEdit so the inspector controls don't disappear.
+		// See #8969.
+		block = (
+			<>
+				<div style={ { display: 'none' } }>{ blockEdit }</div>
+				<Block isHtml>
+					<BlockHtml clientId={ clientId } />
+				</Block>
+			</>
+		);
+	} else if ( lightBlockWrapper ) {
+		block = blockEdit;
+	} else {
+		block = <Block { ...wrapperProps }>{ blockEdit }</Block>;
+	}
 
 	return (
 		<BlockListBlockContext.Provider value={ memoizedValue }>
 			<BlockCrashBoundary onError={ onBlockError }>
-				{ isValid && lightBlockWrapper && (
-					<>
-						{ blockEdit }
-						{ mode === 'html' && (
-							<Block.div __unstableIsHtml>
-								<BlockHtml clientId={ clientId } />
-							</Block.div>
-						) }
-					</>
-				) }
-				{ isValid && ! lightBlockWrapper && (
-					<Block.div { ...wrapperProps }>
-						{ blockEdit }
-						{ mode === 'html' && (
-							<BlockHtml clientId={ clientId } />
-						) }
-					</Block.div>
-				) }
-				{ ! isValid && (
-					<Block.div>
-						<BlockInvalidWarning clientId={ clientId } />
-						<div>{ getSaveElement( blockType, attributes ) }</div>
-					</Block.div>
-				) }
+				{ block }
 			</BlockCrashBoundary>
 			{ !! hasError && (
-				<Block.div>
+				<Block>
 					<BlockCrashWarning />
-				</Block.div>
+				</Block>
 			) }
 		</BlockListBlockContext.Provider>
 	);
 }
 
-const applyWithSelect = withSelect(
-	( select, { clientId, rootClientId, isLargeViewport } ) => {
+const applyWithSelect = withSelect( ( select, { clientId, rootClientId } ) => {
 		const {
 			isBlockSelected,
 			isAncestorMultiSelected,
@@ -262,7 +283,6 @@ const applyWithSelect = withSelect(
 			isTyping,
 			getBlockMode,
 			isSelectionEnabled,
-			getSettings,
 			hasSelectedInnerBlock,
 			getTemplateLock,
 			__unstableGetBlockWithoutInnerBlocks,
@@ -270,7 +290,6 @@ const applyWithSelect = withSelect(
 		} = select( 'core/block-editor' );
 		const block = __unstableGetBlockWithoutInnerBlocks( clientId );
 		const isSelected = isBlockSelected( clientId );
-		const { focusMode, isRTL } = getSettings();
 		const templateLock = getTemplateLock( rootClientId );
 		const checkDeep = true;
 
@@ -295,8 +314,7 @@ const applyWithSelect = withSelect(
 				isBlockMultiSelected( clientId ) ||
 				isAncestorMultiSelected( clientId ),
 			isFirstMultiSelected,
-			isLastMultiSelected:
-				getLastMultiSelectedBlockClientId() === clientId,
+		isLastMultiSelected: getLastMultiSelectedBlockClientId() === clientId,
 			multiSelectedClientIds: isFirstMultiSelected
 				? getMultiSelectedBlockClientIds()
 				: undefined,
@@ -310,8 +328,6 @@ const applyWithSelect = withSelect(
 			mode: getBlockMode( clientId ),
 			isSelectionEnabled: isSelectionEnabled(),
 			isLocked: !! templateLock,
-			isFocusMode: focusMode && isLargeViewport,
-			isRTL,
 
 			// Users of the editor.BlockListBlock filter used to be able to
 			// access the block prop.
@@ -325,8 +341,7 @@ const applyWithSelect = withSelect(
 			isSelected,
 			isAncestorOfSelectedBlock,
 		};
-	}
-);
+} );
 
 const applyWithDispatch = withDispatch( ( dispatch, ownProps, { select } ) => {
 	const {
@@ -405,7 +420,6 @@ const applyWithDispatch = withDispatch( ( dispatch, ownProps, { select } ) => {
 
 export default compose(
 	pure,
-	withViewportMatch( { isLargeViewport: 'medium' } ),
 	applyWithSelect,
 	applyWithDispatch,
 	// block is sometimes not mounted at the right time, causing it be undefined

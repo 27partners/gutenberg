@@ -10,7 +10,9 @@ import {
 	getTemplatePartId,
 	getTemplateType,
 	getPage,
-	getShowOnFront,
+	getNavigationPanelActiveMenu,
+	isNavigationOpened,
+	isInserterOpened,
 } from '../selectors';
 
 describe( 'selectors', () => {
@@ -79,7 +81,12 @@ describe( 'selectors', () => {
 			canUser.mockReturnValueOnce( false );
 			canUser.mockReturnValueOnce( false );
 			const state = { settings: {}, preferences: {} };
-			expect( getSettings( state ) ).toBe( state.settings );
+			const setInserterOpened = () => {};
+			expect( getSettings( state, setInserterOpened ) ).toEqual( {
+				focusMode: false,
+				hasFixedToolbar: false,
+				__experimentalSetIsInserterOpened: setInserterOpened,
+			} );
 		} );
 
 		it( 'returns the extended settings when the user can create media', () => {
@@ -92,10 +99,12 @@ describe( 'selectors', () => {
 					},
 				},
 			};
-			expect( getSettings( state ) ).toEqual( {
+			const setInserterOpened = () => {};
+			expect( getSettings( state, setInserterOpened ) ).toEqual( {
 				key: 'value',
 				focusMode: true,
 				hasFixedToolbar: true,
+				__experimentalSetIsInserterOpened: setInserterOpened,
 				mediaUpload: expect.any( Function ),
 			} );
 		} );
@@ -136,10 +145,34 @@ describe( 'selectors', () => {
 		} );
 	} );
 
-	describe( 'getShowOnFront', () => {
-		it( 'returns the `show_on_front` setting', () => {
-			const state = { showOnFront: {} };
-			expect( getShowOnFront( state ) ).toBe( state.showOnFront );
+	describe( 'getNavigationPanelActiveMenu', () => {
+		it( 'returns the current navigation menu', () => {
+			const state = {
+				navigationPanel: { menu: 'test-menu', isOpen: false },
+			};
+			expect( getNavigationPanelActiveMenu( state ) ).toBe( 'test-menu' );
+		} );
+	} );
+
+	describe( 'isNavigationOpened', () => {
+		it( 'returns the navigation panel isOpened state', () => {
+			const state = {
+				navigationPanel: { menu: 'test-menu', isOpen: false },
+			};
+			expect( isNavigationOpened( state ) ).toBe( false );
+			state.navigationPanel.isOpen = true;
+			expect( isNavigationOpened( state ) ).toBe( true );
+		} );
+	} );
+
+	describe( 'isInserterOpened', () => {
+		it( 'returns the block inserter panel isOpened state', () => {
+			const state = {
+				blockInserterPanel: true,
+			};
+			expect( isInserterOpened( state ) ).toBe( true );
+			state.blockInserterPanel = false;
+			expect( isInserterOpened( state ) ).toBe( false );
 		} );
 	} );
 } );

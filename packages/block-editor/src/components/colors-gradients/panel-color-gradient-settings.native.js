@@ -1,18 +1,24 @@
 /**
+ * External dependencies
+ */
+import { useNavigation } from '@react-navigation/native';
+
+/**
  * WordPress dependencies
  */
-import {
-	ColorControl,
-	BottomSheetConsumer,
-	PanelBody,
-} from '@wordpress/components';
+import { ColorControl, PanelBody } from '@wordpress/components';
+
+/**
+ * Internal dependencies
+ */
+import { blockSettingsScreens } from '../block-settings';
 
 export default function PanelColorGradientSettings( { settings, title } ) {
+	const navigation = useNavigation();
+
 	return (
 		<PanelBody title={ title }>
-			<BottomSheetConsumer>
-				{ ( { onReplaceSubsheet } ) =>
-					settings.map(
+			{ settings.map(
 						( {
 							onColorChange,
 							colorValue,
@@ -22,7 +28,7 @@ export default function PanelColorGradientSettings( { settings, title } ) {
 						} ) => (
 							<ColorControl
 								onPress={ () => {
-									onReplaceSubsheet( 'Color', {
+							navigation.navigate( blockSettingsScreens.color, {
 										onColorChange,
 										colorValue: gradientValue || colorValue,
 										gradientValue,
@@ -35,9 +41,7 @@ export default function PanelColorGradientSettings( { settings, title } ) {
 								color={ gradientValue || colorValue }
 							/>
 						)
-					)
-				}
-			</BottomSheetConsumer>
+			) }
 		</PanelBody>
 	);
 }

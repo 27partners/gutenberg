@@ -7,55 +7,41 @@ import classnames from 'classnames';
 /**
  * WordPress dependencies
  */
-import {
-	ToolbarGroup,
-	__experimentalToolbarItem as ToolbarItem,
-} from '@wordpress/components';
+
+import { dragHandle } from '@wordpress/icons';
+import { ToolbarGroup, ToolbarItem, Button } from '@wordpress/components';
 import { getBlockType } from '@wordpress/blocks';
-import { Component } from '@wordpress/element';
+import { useState } from '@wordpress/element';
 import { withSelect } from '@wordpress/data';
+import { __ } from '@wordpress/i18n';
 
 /**
  * Internal dependencies
  */
+import BlockDraggable from '../block-draggable';
 import { BlockMoverUpButton, BlockMoverDownButton } from './button';
 
-export class BlockMover extends Component {
-	constructor() {
-		super( ...arguments );
-		this.state = {
-			isFocused: false,
-		};
-		this.onFocus = this.onFocus.bind( this );
-		this.onBlur = this.onBlur.bind( this );
-	}
+function BlockMover( {
+	isFirst,
+	isLast,
+	clientIds,
+	isLocked,
+	isHidden,
+	rootClientId,
+	orientation,
+	hideDragHandle,
+} ) {
+	const [ isFocused, setIsFocused ] = useState( false );
 
-	onFocus() {
-		this.setState( {
-			isFocused: true,
-		} );
-	}
+	const onFocus = () => setIsFocused( true );
+	const onBlur = () => setIsFocused( false );
 
-	onBlur() {
-		this.setState( {
-			isFocused: false,
-		} );
-	}
-
-	render() {
-		const {
-			isFirst,
-			isLast,
-			clientIds,
-			isLocked,
-			isHidden,
-			rootClientId,
-			orientation,
-		} = this.props;
-		const { isFocused } = this.state;
 		if ( isLocked || ( isFirst && isLast && ! rootClientId ) ) {
 			return null;
 		}
+
+	const dragHandleLabel =
+		clientIds.length === 1 ? __( 'Drag block' ) : __( 'Drag blocks' );
 
 		// We emulate a disabled state because forcefully applying the `disabled`
 		// attribute on the buttons while it has focus causes the screen to change
@@ -68,34 +54,48 @@ export class BlockMover extends Component {
 					'is-horizontal': orientation === 'horizontal',
 				} ) }
 			>
-				<ToolbarGroup>
-					<ToolbarItem
-						onFocus={ this.onFocus }
-						onBlur={ this.onBlur }
-					>
-						{ ( itemProps ) => (
-							<BlockMoverUpButton
+			{ ! hideDragHandle && (
+				<BlockDraggable
+					clientIds={ clientIds }
+					cloneClassname="block-editor-block-mover__drag-clone"
+				>
+					{ ( { isDraggable, onDraggableStart, onDraggableEnd } ) => (
+						<Button
+							icon={ dragHandle }
+							className="block-editor-block-mover__drag-handle"
+							aria-hidden="true"
+							label={ dragHandleLabel }
+							// Should not be able to tab to drag handle as this
+							// button can only be used with a pointer device.
+							tabIndex="-1"
+							onDragStart={ onDraggableStart }
+							onDragEnd={ onDraggableEnd }
+							draggable={ isDraggable }
+						/>
+					) }
+				</BlockDraggable>
+			) }
+			<ToolbarGroup className="block-editor-block-mover__move-button-container">
+				<ToolbarItem onFocus={ onFocus } onBlur={ onBlur }>
+					{ ( itemProps ) => (
+						<BlockMoverUpButton
 								clientIds={ clientIds }
 								{ ...itemProps }
 							/>
 						) }
 					</ToolbarItem>
-					<ToolbarItem
-						onFocus={ this.onFocus }
-						onBlur={ this.onBlur }
-					>
-						{ ( itemProps ) => (
-							<BlockMoverDownButton
-								clientIds={ clientIds }
-								{ ...itemProps }
-							/>
-						) }
-					</ToolbarItem>
+				<ToolbarItem onFocus={ onFocus } onBlur={ onBlur }>
+					{ ( itemProps ) => (
+						<BlockMoverDownButton
+							clientIds={ clientIds }
+							{ ...itemProps }
+						/>
+					) }
+				</ToolbarItem>
 				</ToolbarGroup>
 			</div>
 		);
 	}
-}
 
 export default withSelect( ( select, { clientIds } ) => {
 	const {

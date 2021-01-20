@@ -7,7 +7,7 @@ import {
 	RichText,
 	BlockControls,
 	RichTextShortcut,
-	__experimentalBlock as Block,
+	useBlockProps,
 } from '@wordpress/block-editor';
 import { ToolbarGroup } from '@wordpress/components';
 import {
@@ -30,7 +30,6 @@ import {
 	formatOutdentRTL,
 } from '@wordpress/icons';
 import { useSelect } from '@wordpress/data';
-import { I18NToolbar } from '@wordpress/storyshare';
 
 /**
  * Internal dependencies
@@ -151,10 +150,11 @@ export default function ListEdit( {
 						},
 					] }
 				/>
-				<I18NToolbar />
 			</BlockControls>
 		</>
 	);
+
+	const blockProps = useBlockProps();
 
 	return (
 		<>
@@ -162,7 +162,7 @@ export default function ListEdit( {
 				identifier="values"
 				multiline="li"
 				__unstableMultilineRootTag={ tagName }
-				tagName={ Block[ tagName ] }
+				tagName={ tagName }
 				onChange={ ( nextValues ) =>
 					setAttributes( { values: nextValues } )
 				}
@@ -180,6 +180,7 @@ export default function ListEdit( {
 				start={ start }
 				reversed={ reversed }
 				type={ type }
+				{ ...blockProps }
 			>
 				{ controls }
 			</RichText>

@@ -3,7 +3,6 @@
  */
 import { __ } from '@wordpress/i18n';
 import { list as icon } from '@wordpress/icons';
-import { withI18N } from '@wordpress/storyshare';
 
 /**
  * Internal dependencies

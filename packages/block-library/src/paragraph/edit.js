@@ -13,21 +13,18 @@ import {
 	BlockControls,
 	InspectorControls,
 	RichText,
-	__experimentalBlock as Block,
+	useBlockProps,
 	getFontSize,
 	__experimentalUseEditorFeature as useEditorFeature,
 } from '@wordpress/block-editor';
 import { createBlock } from '@wordpress/blocks';
 import { useSelect } from '@wordpress/data';
-import { useEffect, useState, useRef } from '@wordpress/element';
+import { useEffect, useRef, useState } from '@wordpress/element';
 import { formatLtr } from '@wordpress/icons';
-import { I18NToolbar } from '@wordpress/storyshare';
 
-/**
- * Browser dependencies
- */
-const { getComputedStyle } = window;
-const querySelector = window.document.querySelector.bind( document );
+function getComputedStyle( node, pseudo ) {
+	return node.ownerDocument.defaultView.getComputedStyle( node, pseudo );
+}
 
 const name = 'core/paragraph';
 const PARAGRAPH_DROP_CAP_SELECTOR = 'p.has-drop-cap';
@@ -57,28 +54,13 @@ function ParagraphRTLToolbar( { direction, setDirection } ) {
 	);
 }
 
-function useDropCap( isDropCap, fontSize, styleFontSize ) {
-	const isDisabled = ! useEditorFeature( 'typography.dropCap' );
+function useDropCapMinHeight( ref, isDisabled, dependencies ) {
+	const [ minHeight, setMinHeight ] = useState();
 
-	const [ minimumHeight, setMinimumHeight ] = useState();
-
-	const { fontSizes } = useSelect( ( select ) =>
-		select( 'core/block-editor' ).getSettings()
-	);
-
-	const fontSizeObject = getFontSize( fontSizes, fontSize, styleFontSize );
 	useEffect( () => {
 		if ( isDisabled ) {
+			setMinHeight();
 			return;
-		}
-
-		const element = querySelector( PARAGRAPH_DROP_CAP_SELECTOR );
-		if ( isDropCap && element ) {
-			setMinimumHeight(
-				getComputedStyle( element, 'first-letter' ).lineHeight
-			);
-		} else if ( minimumHeight ) {
-			setMinimumHeight( undefined );
 		}
 	}, [
 		isDisabled,
@@ -88,7 +70,12 @@ function useDropCap( isDropCap, fontSize, styleFontSize ) {
 		fontSizeObject.size,
 	] );
 
-	return [ ! isDisabled, minimumHeight ];
+		setMinHeight(
+			getComputedStyle( ref.current, 'first-letter' ).lineHeight
+		);
+	}, [ isDisabled, ...dependencies ] );
+
+	return minHeight;
 }
 
 function ParagraphBlock( {
@@ -107,17 +94,26 @@ function ParagraphBlock( {
 		fontSize,
 		style,
 	} = attributes;
+	const isDropCapFeatureEnabled = useEditorFeature( 'typography.dropCap' );
 	const ref = useRef();
-	const [ isDropCapEnabled, dropCapMinimumHeight ] = useDropCap(
-		dropCap,
-		fontSize,
-		style?.fontSize
+	const inlineFontSize = style?.fontSize;
+	const size = useSelect(
+		( select ) => {
+			const { fontSizes } = select( 'core/block-editor' ).getSettings();
+			return getFontSize( fontSizes, fontSize, inlineFontSize ).size;
+		},
+		[ fontSize, inlineFontSize ]
 	);
-
-	const styles = {
-		direction,
-		minHeight: dropCapMinimumHeight,
-	};
+	const hasDropCap = isDropCapFeatureEnabled && dropCap;
+	const minHeight = useDropCapMinHeight( ref, ! hasDropCap, [ size ] );
+	const blockProps = useBlockProps( {
+		ref,
+		className: classnames( {
+			'has-drop-cap': dropCap,
+			[ `has-text-align-${ align }` ]: align,
+		} ),
+		style: { direction, minHeight },
+	} );
 
 	return (
 		<>
@@ -128,7 +124,6 @@ function ParagraphBlock( {
 						setAttributes( { align: newAlign } )
 					}
 				/>
-				<I18NToolbar />
 				<ParagraphRTLToolbar
 					direction={ direction }
 					setDirection={ ( newDirection ) =>
@@ -136,8 +131,8 @@ function ParagraphBlock( {
 					}
 				/>
 			</BlockControls>
+			{ isDropCapFeatureEnabled && (
 			<InspectorControls>
-				{ isDropCapEnabled && (
 					<PanelBody title={ __( 'Text settings' ) }>
 						<ToggleControl
 							label={ __( 'Drop cap' ) }
@@ -154,17 +149,13 @@ function ParagraphBlock( {
 							}
 						/>
 					</PanelBody>
-				) }
 			</InspectorControls>
+			) }
 			<RichText
 				ref={ ref }
 				identifier="content"
-				tagName={ Block.p }
-				className={ classnames( {
-					'has-drop-cap': dropCap,
-					[ `has-text-align-${ align }` ]: align,
-				} ) }
-				style={ styles }
+				tagName="p"
+				{ ...blockProps }
 				value={ content }
 				onChange={ ( newContent ) =>
 					setAttributes( { content: newContent } )

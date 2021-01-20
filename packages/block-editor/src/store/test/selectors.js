@@ -50,6 +50,10 @@ const {
 	isFirstMultiSelectedBlock,
 	getBlockMode,
 	isTyping,
+	isDraggingBlocks,
+	getDraggedBlockClientIds,
+	isBlockBeingDragged,
+	isAncestorBeingDragged,
 	isCaretWithinFormattedText,
 	getBlockInsertionPoint,
 	isBlockInsertionPointVisible,
@@ -64,6 +68,7 @@ const {
 	__experimentalGetBlockListSettingsForBlocks,
 	__experimentalGetLastBlockAttributeChanges,
 	getLowestCommonAncestorWithSelectedBlock,
+	__experimentalGetActiveBlockIdByBlockNames: getActiveBlockIdByBlockNames,
 } = selectors;
 
 describe( 'selectors', () => {
@@ -330,6 +335,209 @@ describe( 'selectors', () => {
 					innerBlocks: [],
 				},
 			] );
+		} );
+		it( 'only returns a new value if the cache key of a direct child changes', () => {
+			const cacheRef = {};
+			const state = {
+				blocks: {
+					byClientId: {
+						23: { clientId: 23, name: 'core/heading' },
+					},
+					attributes: {
+						23: {},
+					},
+					order: {
+						'': [ 23 ],
+					},
+					parents: {
+						23: '',
+					},
+					cache: {
+						23: cacheRef,
+					},
+					controlledInnerBlocks: {},
+				},
+			};
+			const oldBlocks = getBlocks( state );
+
+			const newStateSameCache = {
+				blocks: {
+					byClientId: {
+						23: { clientId: 23, name: 'core/heading' },
+					},
+					attributes: {
+						23: {},
+					},
+					order: {
+						'': [ 23 ],
+					},
+					parents: {
+						23: '',
+					},
+					cache: {
+						23: cacheRef,
+					},
+					controlledInnerBlocks: {},
+				},
+			};
+			// Makes sure blocks are referentially equal if the cache key stays the same.
+			const newBlocks = getBlocks( newStateSameCache );
+			expect( oldBlocks ).toBe( newBlocks );
+
+			const newStateNewCache = {
+				blocks: {
+					byClientId: {
+						23: { clientId: 23, name: 'core/heading' },
+					},
+					attributes: {
+						23: {},
+					},
+					order: {
+						'': [ 23 ],
+					},
+					parents: {
+						23: '',
+					},
+					cache: {
+						23: {},
+					},
+					controlledInnerBlocks: {},
+				},
+			};
+			// Blocks are referentially different if the cache key changes.
+			const newBlocksNewCache = getBlocks( newStateNewCache );
+			expect( oldBlocks ).not.toBe( newBlocksNewCache );
+		} );
+	} );
+
+	describe( 'getBlockParents', () => {
+		it( 'should return parent blocks', () => {
+			const state = {
+				blocks: {
+					parents: {
+						'client-id-01': '',
+						'client-id-02': 'client-id-01',
+						'client-id-03': 'client-id-02',
+						'client-id-04': 'client-id-03',
+					},
+					byClientId: {
+						'client-id-01': {
+							clientId: 'client-id-01',
+							name: 'core/columns',
+						},
+						'client-id-02': {
+							clientId: 'client-id-02',
+							name: 'core/navigation',
+						},
+						'client-id-03': {
+							clientId: 'client-id-03',
+							name: 'core/navigation-link',
+						},
+						'client-id-04': {
+							clientId: 'client-id-04',
+							name: 'core/paragraph',
+						},
+					},
+					cache: {
+						'client-id-01': {},
+						'client-id-02': {},
+						'client-id-03': {},
+						'client-id-04': {},
+					},
+					controlledInnerBlocks: {},
+				},
+			};
+
+			expect( getBlockParents( state, 'client-id-04' ) ).toEqual( [
+				'client-id-01',
+				'client-id-02',
+				'client-id-03',
+			] );
+
+			expect( getBlockParents( state, 'client-id-0' ) ).toEqual( [] );
+		} );
+	} );
+
+	describe( 'getBlockParentsByBlockName', () => {
+		const state = {
+			blocks: {
+				parents: {
+					'client-id-01': '',
+					'client-id-02': 'client-id-01',
+					'client-id-03': 'client-id-02',
+					'client-id-04': 'client-id-03',
+					'client-id-05': 'client-id-04',
+				},
+				byClientId: {
+					'client-id-01': {
+						clientId: 'client-id-01',
+						name: 'core/navigation',
+					},
+					'client-id-02': {
+						clientId: 'client-id-02',
+						name: 'core/columns',
+					},
+					'client-id-03': {
+						clientId: 'client-id-03',
+						name: 'core/navigation',
+					},
+					'client-id-04': {
+						clientId: 'client-id-04',
+						name: 'core/navigation-link',
+					},
+					'client-id-05': {
+						clientId: 'client-id-05',
+						name: 'core/navigation-link',
+					},
+				},
+				cache: {
+					'client-id-01': {},
+					'client-id-02': {},
+					'client-id-03': {},
+					'client-id-04': {},
+					'client-id-05': {},
+				},
+				controlledInnerBlocks: {},
+			},
+		};
+		it( 'should return parent blocks', () => {
+			expect(
+				getBlockParentsByBlockName(
+					state,
+					'client-id-05',
+					'core/navigation'
+				)
+			).toEqual( [ 'client-id-01', 'client-id-03' ] );
+
+			expect(
+				getBlockParentsByBlockName(
+					state,
+					'client-id-05',
+					'core/columns'
+				)
+			).toEqual( [ 'client-id-02' ] );
+
+			expect(
+				getBlockParentsByBlockName(
+					state,
+					'client-id-5',
+					'core/unknown-block'
+				)
+			).toEqual( [] );
+		} );
+		it( 'Should optionally accept an array of parent types and return parents of multiple types', () => {
+			expect(
+				getBlockParentsByBlockName( state, 'client-id-05', [
+					'core/navigation',
+				] )
+			).toEqual( [ 'client-id-01', 'client-id-03' ] );
+
+			expect(
+				getBlockParentsByBlockName( state, 'client-id-05', [
+					'core/columns',
+					'core/navigation',
+				] )
+			).toEqual( [ 'client-id-01', 'client-id-02', 'client-id-03' ] );
 		} );
 		it( 'only returns a new value if the cache key of a direct child changes', () => {
 			const cacheRef = {};
@@ -1849,6 +2057,96 @@ describe( 'selectors', () => {
 		} );
 	} );
 
+	describe( 'isDraggingBlocks', () => {
+		it( 'should return true if a block is being dragged', () => {
+			const state = {
+				draggedBlocks: [ 'block-client-id' ],
+			};
+			expect( isDraggingBlocks( state ) ).toBe( true );
+		} );
+
+		it( 'should return false if a block is not being dragged', () => {
+			const state = {
+				draggedBlocks: [],
+			};
+			expect( isDraggingBlocks( state ) ).toBe( false );
+		} );
+	} );
+
+	describe( 'getDraggedBlockClientIds', () => {
+		it( 'returns the draggedBlocks state', () => {
+			const draggedBlocks = [ 'block-client-id' ];
+			const state = {
+				draggedBlocks,
+			};
+			expect( getDraggedBlockClientIds( state ) ).toBe( draggedBlocks );
+		} );
+	} );
+
+	describe( 'isBlockBeingDragged', () => {
+		it( 'returns true if the given client id is one of the blocks being dragged', () => {
+			const state = {
+				draggedBlocks: [ 'block-1', 'block-2', 'block-3' ],
+			};
+			expect( isBlockBeingDragged( state, 'block-2' ) ).toBe( true );
+		} );
+
+		it( 'returns false if the given client id is not one of the blocks being dragged', () => {
+			const state = {
+				draggedBlocks: [ 'block-1', 'block-2', 'block-3' ],
+			};
+			expect( isBlockBeingDragged( state, 'block-4' ) ).toBe( false );
+		} );
+
+		it( 'returns false if no blocks are being dragged', () => {
+			const state = {
+				draggedBlocks: [],
+			};
+			expect( isBlockBeingDragged( state, 'block-1' ) ).toBe( false );
+		} );
+	} );
+
+	describe( 'isAncestorBeingDragged', () => {
+		it( 'returns true if the given client id is a child of one of the blocks being dragged', () => {
+			const state = {
+				draggedBlocks: [ 'block-1_grandparent' ],
+				blocks: {
+					parents: {
+						'block-1': 'block-1_parent',
+						'block-1_parent': 'block-1_grandparent',
+					},
+				},
+			};
+			expect( isAncestorBeingDragged( state, 'block-1' ) ).toBe( true );
+		} );
+
+		it( 'returns false if the given client id does not have an ancestor being dragged', () => {
+			const state = {
+				draggedBlocks: [ 'block-2_grandparent' ],
+				blocks: {
+					parents: {
+						'block-1': 'block-1_parent',
+						'block-1_parent': 'block-1_grandparent',
+					},
+				},
+			};
+			expect( isAncestorBeingDragged( state, 'block-1' ) ).toBe( false );
+		} );
+
+		it( 'returns false if no blocks are being dragged', () => {
+			const state = {
+				draggedBlocks: [],
+				blocks: {
+					parents: {
+						'block-1': 'block-1_parent',
+						'block-1_parent': 'block-1_grandparent',
+					},
+				},
+			};
+			expect( isAncestorBeingDragged( state, 'block-1' ) ).toBe( false );
+		} );
+	} );
+
 	describe( 'isCaretWithinFormattedText', () => {
 		it( 'returns true if the isCaretWithinFormattedText state is also true', () => {
 			const state = {
@@ -2047,20 +2345,17 @@ describe( 'selectors', () => {
 	} );
 
 	describe( 'isBlockInsertionPointVisible', () => {
-		it( 'should return false if no assigned insertion point', () => {
+		it( 'should return false if insertion point is set to not show', () => {
 			const state = {
-				insertionPoint: null,
+				insertionPointVisibility: false,
 			};
 
 			expect( isBlockInsertionPointVisible( state ) ).toBe( false );
 		} );
 
-		it( 'should return true if assigned insertion point', () => {
+		it( 'should return true if insertion point is set to show', () => {
 			const state = {
-				insertionPoint: {
-					rootClientId: undefined,
-					index: 5,
-				},
+				insertionPointVisibility: true,
 			};
 
 			expect( isBlockInsertionPointVisible( state ) ).toBe( true );
@@ -2160,7 +2455,7 @@ describe( 'selectors', () => {
 			).toBe( false );
 		} );
 
-		it( 'should allow blocks that restrict parent to be inserted into an allowed parent', () => {
+		it( 'should allow blocks to be inserted into an allowed parent', () => {
 			const state = {
 				blocks: {
 					byClientId: {
@@ -2170,7 +2465,29 @@ describe( 'selectors', () => {
 						block1: {},
 					},
 				},
-				blockListSettings: {},
+				blockListSettings: {
+					block1: {},
+				},
+				settings: {},
+			};
+			expect(
+				canInsertBlockType( state, 'core/test-block-c', 'block1' )
+			).toBe( true );
+		} );
+
+		it( 'should deny blocks from being inserted into a block that does not allow inner blocks', () => {
+			const state = {
+				blocks: {
+					byClientId: {
+						block1: { name: 'core/test-block-b' },
+					},
+					attributes: {
+						block1: {},
+					},
+				},
+				blockListSettings: {
+					block1: {},
+				},
 				settings: {},
 			};
 			expect(
@@ -2346,8 +2663,8 @@ describe( 'selectors', () => {
 							id: 1,
 							isTemporary: false,
 							clientId: 'block1',
-							title: 'Reusable Block 1',
-							content: '<!-- /wp:test-block-a -->',
+							title: { raw: 'Reusable Block 1' },
+							content: { raw: '<!-- /wp:test-block-a -->' },
 						},
 					],
 				},
@@ -2426,27 +2743,31 @@ describe( 'selectors', () => {
 							id: 1,
 							isTemporary: false,
 							clientId: 'block1',
-							title: 'Reusable Block 1',
-							content: '<!-- /wp:test-block-a -->',
+							title: { raw: 'Reusable Block 1' },
+							content: { raw: '<!-- /wp:test-block-a -->' },
 						},
 						{
 							id: 2,
 							isTemporary: false,
 							clientId: 'block2',
-							title: 'Reusable Block 2',
-							content: '<!-- /wp:test-block-b -->',
+							title: { raw: 'Reusable Block 2' },
+							content: { raw: '<!-- /wp:test-block-b -->' },
 						},
 					],
 				},
 				preferences: {
 					insertUsage: {},
 				},
-				blockListSettings: {},
+				blockListSettings: {
+					block3: {},
+					block4: {},
+				},
 			};
 
 			const stateSecondBlockRestricted = {
 				...state,
 				blockListSettings: {
+					...state.blockListSettings,
 					block4: {
 						allowedBlocks: [ 'core/test-block-b' ],
 					},
@@ -2472,6 +2793,7 @@ describe( 'selectors', () => {
 				stateSecondBlockRestricted,
 				'block4'
 			);
+			expect( secondBlockFirstCall ).not.toBe( secondBlockSecondCall );
 			expect( secondBlockFirstCall.map( ( item ) => item.id ) ).toEqual( [
 				'core/test-block-a',
 				'core/test-block-b',
@@ -2823,6 +3145,82 @@ describe( 'selectors', () => {
 			expect(
 				getLowestCommonAncestorWithSelectedBlock( state, 'c' )
 			).toBe( 'a' );
+		} );
+	} );
+
+	describe( 'getActiveBlockIdByBlockName', () => {
+		const state = {
+			selectionStart: {
+				clientId: 'client-id-04',
+			},
+			selectionEnd: {
+				clientId: 'client-id-04',
+			},
+			blocks: {
+				parents: {
+					'client-id-01': '',
+					'client-id-02': 'client-id-01',
+					'client-id-03': 'client-id-02',
+					'client-id-04': 'client-id-03',
+					'client-id-05': 'client-id-03',
+				},
+				byClientId: {
+					'client-id-01': {
+						clientId: 'client-id-01',
+						name: 'core/columns',
+					},
+					'client-id-02': {
+						clientId: 'client-id-02',
+						name: 'core/navigation',
+					},
+					'client-id-03': {
+						clientId: 'client-id-03',
+						name: 'core/navigation-link',
+					},
+					'client-id-04': {
+						clientId: 'client-id-04',
+						name: 'core/navigation-link',
+					},
+					'client-id-05': {
+						clientId: 'client-id-05',
+						name: 'core/navigation-link',
+					},
+				},
+				cache: {
+					'client-id-01': {},
+					'client-id-02': {},
+					'client-id-03': {},
+					'client-id-04': {},
+					'client-id-05': {},
+				},
+				order: {
+					'client-id-03': [ 'client-id-04', 'client-id-05' ],
+				},
+				controlledInnerBlocks: {},
+			},
+		};
+		it( 'Should return first active matching block (including self) when single block selected', () => {
+			expect(
+				getActiveBlockIdByBlockNames( state, [
+					'core/navigation-link',
+				] )
+			).toEqual( 'client-id-04' );
+
+			expect(
+				getActiveBlockIdByBlockNames( state, [
+					'core/columns',
+					'core/navigation',
+				] )
+			).toEqual( 'client-id-02' );
+		} );
+		it( 'Should return first active matching block with (excluding self) when multi selected', () => {
+			state.selectionEnd.clientId = 'client-id-05';
+
+			expect(
+				getActiveBlockIdByBlockNames( state, [
+					'core/navigation-link',
+				] )
+			).toEqual( 'client-id-03' );
 		} );
 	} );
 } );

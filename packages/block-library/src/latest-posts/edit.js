@@ -7,7 +7,7 @@ import classnames from 'classnames';
 /**
  * WordPress dependencies
  */
-import { Component, RawHTML } from '@wordpress/element';
+import { useState, RawHTML, useEffect, useRef } from '@wordpress/element';
 import {
 	BaseControl,
 	PanelBody,
@@ -28,8 +28,9 @@ import {
 	BlockAlignmentToolbar,
 	BlockControls,
 	__experimentalImageSizeControl as ImageSizeControl,
+	useBlockProps,
 } from '@wordpress/block-editor';
-import { withSelect } from '@wordpress/data';
+import { useSelect } from '@wordpress/data';
 import { pin, list, grid } from '@wordpress/icons';
 
 /**
@@ -51,107 +52,180 @@ const USERS_LIST_QUERY = {
 	per_page: -1,
 };
 
-class LatestPostsEdit extends Component {
-	constructor() {
-		super( ...arguments );
-		this.state = {
-			categoriesList: [],
-			authorList: [],
+export default function LatestPostsEdit( { attributes, setAttributes } ) {
+	const {
+		postsToShow,
+		order,
+		orderBy,
+		categories,
+		selectedAuthor,
+		displayFeaturedImage,
+		displayPostContentRadio,
+		displayPostContent,
+		displayPostDate,
+		displayAuthor,
+		postLayout,
+		columns,
+		excerptLength,
+		featuredImageAlign,
+		featuredImageSizeSlug,
+		featuredImageSizeWidth,
+		featuredImageSizeHeight,
+		addLinkToFeaturedImage,
+	} = attributes;
+	const {
+		imageSizeOptions,
+		latestPosts,
+		defaultImageWidth,
+		defaultImageHeight,
+	} = useSelect(
+		( select ) => {
+			const { getEntityRecords, getMedia } = select( 'core' );
+			const { getSettings } = select( 'core/block-editor' );
+			const { imageSizes, imageDimensions } = getSettings();
+			const catIds =
+				categories && categories.length > 0
+					? categories.map( ( cat ) => cat.id )
+					: [];
+			const latestPostsQuery = pickBy(
+				{
+					categories: catIds,
+					author: selectedAuthor,
+					order,
+					orderby: orderBy,
+					per_page: postsToShow,
+				},
+				( value ) => ! isUndefined( value )
+			);
+
+			const posts = getEntityRecords(
+				'postType',
+				'post',
+				latestPostsQuery
+			);
+
+			return {
+				defaultImageWidth: get(
+					imageDimensions,
+					[ featuredImageSizeSlug, 'width' ],
+					0
+				),
+				defaultImageHeight: get(
+					imageDimensions,
+					[ featuredImageSizeSlug, 'height' ],
+					0
+				),
+				imageSizeOptions: imageSizes
+					.filter( ( { slug } ) => slug !== 'full' )
+					.map( ( { name, slug } ) => ( {
+						value: slug,
+						label: name,
+					} ) ),
+				latestPosts: ! Array.isArray( posts )
+					? posts
+					: posts.map( ( post ) => {
+							if ( ! post.featured_media ) return post;
+
+							const image = getMedia( post.featured_media );
+							let url = get(
+								image,
+								[
+									'media_details',
+									'sizes',
+									featuredImageSizeSlug,
+									'source_url',
+								],
+								null
+							);
+							if ( ! url ) {
+								url = get( image, 'source_url', null );
+							}
+							const featuredImageInfo = {
+								url,
+								// eslint-disable-next-line camelcase
+								alt: image?.alt_text,
 		};
-	}
-
-	componentDidMount() {
-		this.isStillMounted = true;
-		this.fetchRequest = apiFetch( {
-			path: addQueryArgs( `/wp/v2/categories`, CATEGORIES_LIST_QUERY ),
-		} )
-			.then( ( categoriesList ) => {
-				if ( this.isStillMounted ) {
-					this.setState( { categoriesList } );
-				}
-			} )
-			.catch( () => {
-				if ( this.isStillMounted ) {
-					this.setState( { categoriesList: [] } );
-				}
-			} );
-		this.fetchRequest = apiFetch( {
-			path: addQueryArgs( `/wp/v2/users`, USERS_LIST_QUERY ),
-		} )
-			.then( ( authorList ) => {
-				if ( this.isStillMounted ) {
-					this.setState( { authorList } );
-				}
-			} )
-			.catch( () => {
-				if ( this.isStillMounted ) {
-					this.setState( { authorList: [] } );
-				}
-			} );
-	}
-
-	componentWillUnmount() {
-		this.isStillMounted = false;
-	}
-
-	render() {
-		const {
-			attributes,
-			setAttributes,
-			imageSizeOptions,
-			latestPosts,
-			defaultImageWidth,
-			defaultImageHeight,
-		} = this.props;
-		const { categoriesList, authorList } = this.state;
-		const {
-			displayFeaturedImage,
-			displayPostContentRadio,
-			displayPostContent,
-			displayPostDate,
-			displayAuthor,
-			postLayout,
-			columns,
+							return { ...post, featuredImageInfo };
+					  } ),
+			};
+		},
+		[
+			featuredImageSizeSlug,
+			postsToShow,
 			order,
 			orderBy,
 			categories,
 			selectedAuthor,
-			postsToShow,
-			excerptLength,
-			featuredImageAlign,
-			featuredImageSizeSlug,
-			featuredImageSizeWidth,
-			featuredImageSizeHeight,
-		} = attributes;
-		const categorySuggestions = categoriesList.reduce(
-			( accumulator, category ) => ( {
-				...accumulator,
-				[ category.name ]: category,
-			} ),
-			{}
+		]
+	);
+	const [ categoriesList, setCategoriesList ] = useState( [] );
+	const [ authorList, setAuthorList ] = useState( [] );
+	const categorySuggestions = categoriesList.reduce(
+		( accumulator, category ) => ( {
+			...accumulator,
+			[ category.name ]: category,
+		} ),
+		{}
+	);
+	const selectCategories = ( tokens ) => {
+		const hasNoSuggestion = tokens.some(
+			( token ) =>
+				typeof token === 'string' && ! categorySuggestions[ token ]
 		);
-		const selectCategories = ( tokens ) => {
-			const hasNoSuggestion = tokens.some(
-				( token ) =>
-					typeof token === 'string' && ! categorySuggestions[ token ]
-			);
-			if ( hasNoSuggestion ) {
-				return;
-			}
-			// Categories that are already will be objects, while new additions will be strings (the name).
-			// allCategories nomalizes the array so that they are all objects.
-			const allCategories = tokens.map( ( token ) => {
-				return typeof token === 'string'
-					? categorySuggestions[ token ]
-					: token;
+		if ( hasNoSuggestion ) {
+			return;
+		}
+		// Categories that are already will be objects, while new additions will be strings (the name).
+		// allCategories nomalizes the array so that they are all objects.
+		const allCategories = tokens.map( ( token ) => {
+			return typeof token === 'string'
+				? categorySuggestions[ token ]
+				: token;
+		} );
+		// We do nothing if the category is not selected
+		// from suggestions.
+		if ( includes( allCategories, null ) ) {
+			return false;
+	}
+		setAttributes( { categories: allCategories } );
+	};
+
+	const isStillMounted = useRef();
+
+	useEffect( () => {
+		isStillMounted.current = true;
+
+		apiFetch( {
+			path: addQueryArgs( `/wp/v2/categories`, CATEGORIES_LIST_QUERY ),
+		} )
+			.then( ( data ) => {
+				if ( isStillMounted.current ) {
+					setCategoriesList( data );
+				}
+			} )
+			.catch( () => {
+				if ( isStillMounted.current ) {
+					setCategoriesList( [] );
+				}
 			} );
-			// We do nothing if the category is not selected
-			// from suggestions.
-			if ( includes( allCategories, null ) ) {
-				return false;
-			}
-			setAttributes( { categories: allCategories } );
+		apiFetch( {
+			path: addQueryArgs( `/wp/v2/users`, USERS_LIST_QUERY ),
+		} )
+			.then( ( data ) => {
+				if ( isStillMounted.current ) {
+					setAuthorList( data );
+				}
+			} )
+			.catch( () => {
+				if ( isStillMounted.current ) {
+					setAuthorList( [] );
+	}
+			} );
+
+		return () => {
+			isStillMounted.current = false;
 		};
+	}, [] );
 
 		const inspectorControls = (
 			<InspectorControls>
@@ -209,64 +283,76 @@ class LatestPostsEdit extends Component {
 						onChange={ ( value ) =>
 							setAttributes( { displayPostDate: value } )
 						}
-					/>
-				</PanelBody>
-
-				<PanelBody title={ __( 'Featured image settings' ) }>
-					<ToggleControl
-						label={ __( 'Display featured image' ) }
-						checked={ displayFeaturedImage }
-						onChange={ ( value ) =>
-							setAttributes( { displayFeaturedImage: value } )
-						}
-					/>
-					{ displayFeaturedImage && (
-						<>
-							<ImageSizeControl
-								onChange={ ( value ) => {
-									const newAttrs = {};
-									if ( value.hasOwnProperty( 'width' ) ) {
-										newAttrs.featuredImageSizeWidth =
-											value.width;
-									}
-									if ( value.hasOwnProperty( 'height' ) ) {
-										newAttrs.featuredImageSizeHeight =
-											value.height;
-									}
-									setAttributes( newAttrs );
-								} }
-								slug={ featuredImageSizeSlug }
-								width={ featuredImageSizeWidth }
-								height={ featuredImageSizeHeight }
-								imageWidth={ defaultImageWidth }
-								imageHeight={ defaultImageHeight }
-								imageSizeOptions={ imageSizeOptions }
-								onChangeImage={ ( value ) =>
-									setAttributes( {
-										featuredImageSizeSlug: value,
-										featuredImageSizeWidth: undefined,
-										featuredImageSizeHeight: undefined,
-									} )
-								}
-							/>
-							<BaseControl>
-								<BaseControl.VisualLabel>
-									{ __( 'Image alignment' ) }
-								</BaseControl.VisualLabel>
-								<BlockAlignmentToolbar
-									value={ featuredImageAlign }
-									onChange={ ( value ) =>
-										setAttributes( {
-											featuredImageAlign: value,
-										} )
-									}
-									controls={ [ 'left', 'center', 'right' ] }
-									isCollapsed={ false }
 								/>
 							</BaseControl>
 						</>
 					) }
 				</PanelBody>
+
+			<PanelBody title={ __( 'Featured image settings' ) }>
+				<ToggleControl
+					label={ __( 'Display featured image' ) }
+					checked={ displayFeaturedImage }
+					onChange={ ( value ) =>
+						setAttributes( { displayFeaturedImage: value } )
+					}
+				/>
+				{ displayFeaturedImage && (
+					<>
+						<ImageSizeControl
+							onChange={ ( value ) => {
+								const newAttrs = {};
+								if ( value.hasOwnProperty( 'width' ) ) {
+									newAttrs.featuredImageSizeWidth =
+										value.width;
+								}
+								if ( value.hasOwnProperty( 'height' ) ) {
+									newAttrs.featuredImageSizeHeight =
+										value.height;
+								}
+								setAttributes( newAttrs );
+							} }
+							slug={ featuredImageSizeSlug }
+							width={ featuredImageSizeWidth }
+							height={ featuredImageSizeHeight }
+							imageWidth={ defaultImageWidth }
+							imageHeight={ defaultImageHeight }
+							imageSizeOptions={ imageSizeOptions }
+							onChangeImage={ ( value ) =>
+								setAttributes( {
+									featuredImageSizeSlug: value,
+									featuredImageSizeWidth: undefined,
+									featuredImageSizeHeight: undefined,
+								} )
+							}
+						/>
+						<BaseControl className="block-editor-image-alignment-control__row">
+							<BaseControl.VisualLabel>
+								{ __( 'Image alignment' ) }
+							</BaseControl.VisualLabel>
+							<BlockAlignmentToolbar
+								value={ featuredImageAlign }
+								onChange={ ( value ) =>
+									setAttributes( {
+										featuredImageAlign: value,
+									} )
+								}
+								controls={ [ 'left', 'center', 'right' ] }
+								isCollapsed={ false }
+							/>
+						</BaseControl>
+						<ToggleControl
+							label={ __( 'Add link to featured image' ) }
+							checked={ addLinkToFeaturedImage }
+							onChange={ ( value ) =>
+								setAttributes( {
+									addLinkToFeaturedImage: value,
+								} )
+							}
+						/>
+					</>
+				) }
+			</PanelBody>
 
 				<PanelBody title={ __( 'Sorting and filtering' ) }>
 					<QueryControls
@@ -317,10 +403,20 @@ class LatestPostsEdit extends Component {
 			</InspectorControls>
 		);
 
+	const blockProps = useBlockProps( {
+		className: classnames( {
+			'wp-block-latest-posts__list': true,
+			'is-grid': postLayout === 'grid',
+			'has-dates': displayPostDate,
+			'has-author': displayAuthor,
+			[ `columns-${ columns }` ]: postLayout === 'grid',
+		} ),
+	} );
+
 		const hasPosts = Array.isArray( latestPosts ) && latestPosts.length;
 		if ( ! hasPosts ) {
 			return (
-				<>
+			<div { ...blockProps }>
 					{ inspectorControls }
 					<Placeholder icon={ pin } label={ __( 'Latest Posts' ) }>
 						{ ! Array.isArray( latestPosts ) ? (
@@ -329,7 +425,7 @@ class LatestPostsEdit extends Component {
 							__( 'No posts found.' )
 						) }
 					</Placeholder>
-				</>
+			</div>
 			);
 		}
 
@@ -362,15 +458,7 @@ class LatestPostsEdit extends Component {
 				<BlockControls>
 					<ToolbarGroup controls={ layoutControls } />
 				</BlockControls>
-				<ul
-					className={ classnames( this.props.className, {
-						'wp-block-latest-posts__list': true,
-						'is-grid': postLayout === 'grid',
-						'has-dates': displayPostDate,
-						'has-author': displayAuthor,
-						[ `columns-${ columns }` ]: postLayout === 'grid',
-					} ) }
-				>
+			<ul { ...blockProps }>
 					{ displayPosts.map( ( post, i ) => {
 						const titleTrimmed = invoke( post, [
 							'title',
@@ -390,16 +478,31 @@ class LatestPostsEdit extends Component {
 							excerptElement.innerText ||
 							'';
 
-						const imageSourceUrl = post.featuredImageSourceUrl;
-
+					const {
+						featuredImageInfo: {
+							url: imageSourceUrl,
+							alt: featuredImageAlt,
+						} = {},
+					} = post;
 						const imageClasses = classnames( {
 							'wp-block-latest-posts__featured-image': true,
 							[ `align${ featuredImageAlign }` ]: !! featuredImageAlign,
 						} );
+					const renderFeaturedImage =
+						displayFeaturedImage && imageSourceUrl;
+					const featuredImage = renderFeaturedImage && (
+						<img
+							src={ imageSourceUrl }
+							alt={ featuredImageAlt }
+							style={ {
+								maxWidth: featuredImageSizeWidth,
+								maxHeight: featuredImageSizeHeight,
+							} }
+						/>
+					);
 
-						const needsReadMore =
-							excerptLength <
-								excerpt.trim().split( ' ' ).length &&
+					const needsReadMore =
+						excerptLength < excerpt.trim().split( ' ' ).length &&
 							post.excerpt.raw === '';
 
 						const postExcerpt = needsReadMore ? (
@@ -424,17 +527,18 @@ class LatestPostsEdit extends Component {
 
 						return (
 							<li key={ i }>
-								{ displayFeaturedImage && (
-									<div className={ imageClasses }>
-										{ imageSourceUrl && (
-											<img
-												src={ imageSourceUrl }
-												alt=""
-												style={ {
-													maxWidth: featuredImageSizeWidth,
-													maxHeight: featuredImageSizeHeight,
-												} }
-											/>
+							{ renderFeaturedImage && (
+								<div className={ imageClasses }>
+									{ addLinkToFeaturedImage ? (
+										<a
+											href={ post.link }
+											target="_blank"
+											rel="noreferrer noopener"
+										>
+											{ featuredImage }
+										</a>
+									) : (
+										featuredImage
 										) }
 									</div>
 								) }
@@ -460,16 +564,10 @@ class LatestPostsEdit extends Component {
 								) }
 								{ displayPostDate && post.date_gmt && (
 									<time
-										dateTime={ format(
-											'c',
-											post.date_gmt
-										) }
-										className="wp-block-latest-posts__post-date"
-									>
-										{ dateI18n(
-											dateFormat,
-											post.date_gmt
-										) }
+									dateTime={ format( 'c', post.date_gmt ) }
+									className="wp-block-latest-posts__post-date"
+								>
+									{ dateI18n( dateFormat, post.date_gmt ) }
 									</time>
 								) }
 								{ displayPostContent &&
@@ -493,73 +591,3 @@ class LatestPostsEdit extends Component {
 			</>
 		);
 	}
-}
-
-export default withSelect( ( select, props ) => {
-	const {
-		featuredImageSizeSlug,
-		postsToShow,
-		order,
-		orderBy,
-		categories,
-		selectedAuthor,
-	} = props.attributes;
-	const { getEntityRecords, getMedia } = select( 'core' );
-	const { getSettings } = select( 'core/block-editor' );
-	const { imageSizes, imageDimensions } = getSettings();
-	const catIds =
-		categories && categories.length > 0
-			? categories.map( ( cat ) => cat.id )
-			: [];
-	const latestPostsQuery = pickBy(
-		{
-			categories: catIds,
-			author: selectedAuthor,
-			order,
-			orderby: orderBy,
-			per_page: postsToShow,
-		},
-		( value ) => ! isUndefined( value )
-	);
-
-	const posts = getEntityRecords( 'postType', 'post', latestPostsQuery );
-	const imageSizeOptions = imageSizes
-		.filter( ( { slug } ) => slug !== 'full' )
-		.map( ( { name, slug } ) => ( { value: slug, label: name } ) );
-
-	return {
-		defaultImageWidth: get(
-			imageDimensions,
-			[ featuredImageSizeSlug, 'width' ],
-			0
-		),
-		defaultImageHeight: get(
-			imageDimensions,
-			[ featuredImageSizeSlug, 'height' ],
-			0
-		),
-		imageSizeOptions,
-		latestPosts: ! Array.isArray( posts )
-			? posts
-			: posts.map( ( post ) => {
-					if ( post.featured_media ) {
-						const image = getMedia( post.featured_media );
-						let url = get(
-							image,
-							[
-								'media_details',
-								'sizes',
-								featuredImageSizeSlug,
-								'source_url',
-							],
-							null
-						);
-						if ( ! url ) {
-							url = get( image, 'source_url', null );
-						}
-						return { ...post, featuredImageSourceUrl: url };
-					}
-					return post;
-			  } ),
-	};
-} )( LatestPostsEdit );

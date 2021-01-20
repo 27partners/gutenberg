@@ -14,6 +14,7 @@ import { createBlock } from '@wordpress/blocks';
 import {
 	KeyboardAwareFlatList,
 	ReadableContentView,
+	WIDE_ALIGNMENTS,
 } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 
@@ -53,6 +54,7 @@ export class BlockList extends Component {
 		this.extraData = {
 			parentWidth: this.props.parentWidth,
 			renderFooterAppender: this.props.renderFooterAppender,
+			renderAppender: this.props.renderAppender,
 			onDeleteBlock: this.props.onDeleteBlock,
 			contentStyle: this.props.contentstyle,
 		};
@@ -104,6 +106,7 @@ export class BlockList extends Component {
 			<EmptyListComponentCompose
 				rootClientId={ this.props.rootClientId }
 				renderAppender={ this.props.renderAppender }
+				renderFooterAppender={ this.props.renderFooterAppender }
 			/>
 		);
 	}
@@ -114,18 +117,21 @@ export class BlockList extends Component {
 			renderFooterAppender,
 			onDeleteBlock,
 			contentStyle,
+			renderAppender,
 		} = this.props;
 		if (
 			this.extraData.parentWidth !== parentWidth ||
 			this.extraData.renderFooterAppender !== renderFooterAppender ||
 			this.extraData.onDeleteBlock !== onDeleteBlock ||
-			this.extraData.contentStyle !== contentStyle
+			this.extraData.contentStyle !== contentStyle ||
+			this.extraData.renderAppender !== renderAppender
 		) {
 			this.extraData = {
 				parentWidth,
 				renderFooterAppender,
 				onDeleteBlock,
 				contentStyle,
+				renderAppender,
 			};
 		}
 		return this.extraData;
@@ -311,7 +317,8 @@ export class BlockList extends Component {
 }
 
 export default compose( [
-	withSelect( ( select, { rootClientId, orientation } ) => {
+	withSelect(
+		( select, { rootClientId, orientation, filterInnerBlocks } ) => {
 		const {
 			getBlockCount,
 			getBlockOrder,
@@ -336,16 +343,35 @@ export default compose( [
 		const isFloatingToolbarVisible =
 			!! selectedBlockClientId && hasRootInnerBlocks;
 
+			let blockClientIds = getBlockOrder( rootClientId );
+			// Display only block which fulfill the condition in passed `filterInnerBlocks` function
+			if ( filterInnerBlocks ) {
+				blockClientIds = filterInnerBlocks( blockClientIds );
+			}
+
+			const isReadOnly = getSettings().readOnly;
+
+			const blockCount = getBlockCount( rootBlockId );
+
+			const rootBlockId = getBlockHierarchyRootClientId(
+				selectedBlockClientId
+			);
+			const hasRootInnerBlocks = !! blockCount;
+
+			const isFloatingToolbarVisible =
+				!! selectedBlockClientId && hasRootInnerBlocks;
+
 		return {
 			blockClientIds,
-			blockCount: getBlockCount( rootClientId ),
+				blockCount,
 			isBlockInsertionPointVisible: isBlockInsertionPointVisible(),
 			isReadOnly,
 			isRootList: rootClientId === undefined,
 			isFloatingToolbarVisible,
 			isStackedHorizontally,
 		};
-	} ),
+		}
+	),
 	withDispatch( ( dispatch ) => {
 		const { insertBlock, replaceBlock, clearSelectedBlock } = dispatch(
 			'core/block-editor'
@@ -366,10 +392,22 @@ class EmptyListComponent extends Component {
 			shouldShowInsertionPoint,
 			rootClientId,
 			renderAppender,
+			renderFooterAppender,
 		} = this.props;
+
+		if ( renderFooterAppender ) {
+			return null;
+		}
+
 		return (
 			<View style={ styles.defaultAppender }>
-				<ReadableContentView>
+				<ReadableContentView
+					align={
+						renderAppender
+							? WIDE_ALIGNMENTS.alignments.full
+							: undefined
+					}
+				>
 					<BlockListAppender
 						rootClientId={ rootClientId }
 						renderAppender={ renderAppender }

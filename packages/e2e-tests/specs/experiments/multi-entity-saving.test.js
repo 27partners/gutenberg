@@ -13,7 +13,10 @@ import { addQueryArgs } from '@wordpress/url';
 /**
  * Internal dependencies
  */
-import { useExperimentalFeatures } from '../../experimental-features';
+import {
+	useExperimentalFeatures,
+	navigationPanel,
+} from '../../experimental-features';
 
 describe( 'Multi-entity save flow', () => {
 	// Selectors - usable between Post/Site editors.
@@ -21,10 +24,12 @@ describe( 'Multi-entity save flow', () => {
 	const checkboxInputSelector = '.components-checkbox-control__input';
 	const entitiesSaveSelector = '.editor-entities-saved-states__save-button';
 	const templatePartSelector = '*[data-type="core/template-part"]';
-	const activatedTemplatePartSelector = `${ templatePartSelector } .block-editor-inner-blocks`;
+	const activatedTemplatePartSelector = `${ templatePartSelector } .block-editor-block-list__layout`;
 	const savePanelSelector = '.entities-saved-states__panel';
-	const closePanelButtonSelector = 'button[aria-label="Close panel"]';
-	const createNewButtonSelector = '//button[contains(text(), "New section")]';
+	const closePanelButtonSelector =
+		'.editor-post-publish-panel__header-cancel-button button';
+	const createNewButtonSelector =
+		'//button[contains(text(), "New template part")]';
 
 	// Reusable assertions across Post/Site editors.
 	const assertAllBoxesChecked = async () => {
@@ -108,7 +113,7 @@ describe( 'Multi-entity save flow', () => {
 
 			it( 'Should trigger multi-entity save button once template part edited', async () => {
 				// Create new template part.
-				await insertBlock( 'Section' );
+				await insertBlock( 'Template Part' );
 				const [ createNewButton ] = await page.$x(
 					createNewButtonSelector
 				);
@@ -123,6 +128,11 @@ describe( 'Multi-entity save flow', () => {
 				await page.keyboard.type( 'some words...' );
 
 				await assertMultiSaveEnabled();
+
+				// TODO: Remove when toolbar supports text fields
+				expect( console ).toHaveWarnedWith(
+					'Using custom components as toolbar controls is deprecated. Please use ToolbarItem or ToolbarButton components instead. See: https://developer.wordpress.org/block-editor/components/toolbar-button/#inside-blockcontrols'
+				);
 			} );
 
 			it( 'Should only have save panel a11y button active after child entities edited', async () => {
@@ -211,12 +221,9 @@ describe( 'Multi-entity save flow', () => {
 
 	describe( 'Site Editor', () => {
 		// Selectors - Site editor specific.
-		const demoTemplateSelector = '//button[contains(., "front-page")]';
 		const saveSiteSelector = '.edit-site-save-button__button';
 		const activeSaveSiteSelector = `${ saveSiteSelector }[aria-disabled=false]`;
 		const disabledSaveSiteSelector = `${ saveSiteSelector }[aria-disabled=true]`;
-		const templateDropdownSelector =
-			'.components-dropdown-menu__toggle[aria-label="Switch Template"]';
 		const saveA11ySelector = '.edit-site-editor__toggle-save-panel-button';
 
 		it( 'Should be enabled after edits', async () => {
@@ -227,14 +234,18 @@ describe( 'Multi-entity save flow', () => {
 			await visitAdminPage( 'admin.php', query );
 
 			// Ensure we are on 'front-page' demo template.
-			await page.click( templateDropdownSelector );
-			const demoTemplateButton = await page.waitForXPath(
-				demoTemplateSelector
-			);
-			await demoTemplateButton.click();
+			await navigationPanel.open();
+			await navigationPanel.backToRoot();
+			await navigationPanel.navigate( 'Templates' );
+			await navigationPanel.clickItemByText( 'Front page' );
+			await navigationPanel.close();
 
-			// Insert a new template part placeholder.
-			await insertBlock( 'Section' );
+			// Click the first block so that the template part inserts in the right place.
+			const firstBlock = await page.$( '.wp-block' );
+			await firstBlock.click();
+
+			// Insert something to dirty the editor.
+			await insertBlock( 'Paragraph' );
 
 			const enabledButton = await page.waitForSelector(
 				activeSaveSiteSelector

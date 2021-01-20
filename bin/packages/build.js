@@ -128,7 +128,7 @@ if ( files.length ) {
 		{
 			ignore: [
 				`**/benchmark/**`,
-				`${ PACKAGES_DIR }/*/src/**/{__mocks__,__tests__,test}/**`,
+				`**/{__mocks__,__tests__,test}/**`,
 				`**/{storybook,stories}/**`,
 			],
 			onlyFiles: true,

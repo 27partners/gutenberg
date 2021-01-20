@@ -2,11 +2,12 @@
  * WordPress dependencies
  */
 import { __ } from '@wordpress/i18n';
-import { Component } from '@wordpress/element';
+import { useState } from '@wordpress/element';
 import {
 	BlockControls,
 	PlainText,
 	transformStyles,
+	useBlockProps,
 } from '@wordpress/block-editor';
 import {
 	ToolbarButton,
@@ -14,22 +15,12 @@ import {
 	SandBox,
 	ToolbarGroup,
 } from '@wordpress/components';
-import { withSelect } from '@wordpress/data';
+import { useSelect } from '@wordpress/data';
 
-class HTMLEdit extends Component {
-	constructor() {
-		super( ...arguments );
-		this.state = {
-			isPreview: false,
-			styles: [],
-		};
-		this.switchToHTML = this.switchToHTML.bind( this );
-		this.switchToPreview = this.switchToPreview.bind( this );
-	}
+export default function HTMLEdit( { attributes, setAttributes, isSelected } ) {
+	const [ isPreview, setIsPreview ] = useState();
 
-	componentDidMount() {
-		const { styles } = this.props;
-
+	const styles = useSelect( ( select ) => {
 		// Default styles used to unset some of the styles
 		// that might be inherited from the editor style.
 		const defaultStyles = `
@@ -41,38 +32,37 @@ class HTMLEdit extends Component {
 			}
 		`;
 
-		this.setState( {
-			styles: [ defaultStyles, ...transformStyles( styles ) ],
-		} );
+		return [
+			defaultStyles,
+			...transformStyles(
+				select( 'core/block-editor' ).getSettings().styles
+			),
+		];
+	}, [] );
+
+	function switchToPreview() {
+		setIsPreview( true );
 	}
 
-	switchToPreview() {
-		this.setState( { isPreview: true } );
+	function switchToHTML() {
+		setIsPreview( false );
 	}
-
-	switchToHTML() {
-		this.setState( { isPreview: false } );
-	}
-
-	render() {
-		const { attributes, setAttributes } = this.props;
-		const { isPreview, styles } = this.state;
 
 		return (
-			<div className="wp-block-html">
+		<div { ...useBlockProps() }>
 				<BlockControls>
 					<ToolbarGroup>
 						<ToolbarButton
 							className="components-tab-button"
 							isPressed={ ! isPreview }
-							onClick={ this.switchToHTML }
+						onClick={ switchToHTML }
 						>
 							<span>HTML</span>
 						</ToolbarButton>
 						<ToolbarButton
 							className="components-tab-button"
 							isPressed={ isPreview }
-							onClick={ this.switchToPreview }
+						onClick={ switchToPreview }
 						>
 							<span>{ __( 'Preview' ) }</span>
 						</ToolbarButton>
@@ -91,7 +81,7 @@ class HTMLEdit extends Component {
 									Some browsers do not bubble up the clicks from the sandboxed iframe, which makes it 
 									difficult to reselect the block. 
 								*/ }
-								{ ! this.props.isSelected && (
+							{ ! isSelected && (
 									<div className="block-library-html__preview-overlay"></div>
 								) }
 							</>
@@ -110,10 +100,3 @@ class HTMLEdit extends Component {
 			</div>
 		);
 	}
-}
-export default withSelect( ( select ) => {
-	const { getSettings } = select( 'core/block-editor' );
-	return {
-		styles: getSettings().styles,
-	};
-} )( HTMLEdit );

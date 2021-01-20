@@ -113,6 +113,57 @@ async function emulateClipboard( type ) {
 }
 
 /**
+ * Sets the clipboard data that can be pasted with
+ * `pressKeyWithModifier( 'primary', 'v' )`.
+ *
+ * @param {Object} $1           Options.
+ * @param {string} $1.plainText Plain text to set.
+ * @param {string} $1.html      HTML to set.
+ */
+export async function setClipboardData( { plainText = '', html = '' } ) {
+	await page.evaluate(
+		( _plainText, _html ) => {
+			window._clipboardData = new DataTransfer();
+			window._clipboardData.setData( 'text/plain', _plainText );
+			window._clipboardData.setData( 'text/html', _html );
+		},
+		plainText,
+		html
+	);
+}
+
+async function emulateClipboard( type ) {
+	await page.evaluate( ( _type ) => {
+		if ( _type !== 'paste' ) {
+			window._clipboardData = new DataTransfer();
+
+			const selection = window.getSelection();
+			const plainText = selection.toString();
+			let html = plainText;
+
+			if ( selection.rangeCount ) {
+				const range = selection.getRangeAt( 0 );
+				const fragment = range.cloneContents();
+
+				html = Array.from( fragment.childNodes )
+					.map( ( node ) => node.outerHTML || node.nodeValue )
+					.join( '' );
+			}
+
+			window._clipboardData.setData( 'text/plain', plainText );
+			window._clipboardData.setData( 'text/html', html );
+		}
+
+		document.activeElement.dispatchEvent(
+			new ClipboardEvent( _type, {
+				bubbles: true,
+				clipboardData: window._clipboardData,
+			} )
+		);
+	}, type );
+}
+
+/**
  * Performs a key press with modifier (Shift, Control, Meta, Alt), where each modifier
  * is normalized to platform-specific modifier.
  *

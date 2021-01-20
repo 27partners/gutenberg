@@ -48,7 +48,7 @@
 
 .components-datetime__date {
 	min-height: 236px;
-	border-top: 1px solid $gray-200;
+	border-top: 1px solid $gray-300;
 
 	// Override external DatePicker styles.
 	.DayPickerNavigation_leftButton__horizontalDefault {
@@ -135,7 +135,6 @@
 		.components-datetime__time-separator {
 			display: inline-block;
 			padding: 0 3px 0 0;
-			color: $dark-gray-500;
 		}
 
 		.components-datetime__time-field {
@@ -183,7 +182,13 @@
 		.components-datetime__time-field-year input {
 			border-radius: 0 $radius-block-ui $radius-block-ui 0 !important;
 		}
+		}
 	}
+
+.components-datetime__timezone {
+	line-height: 30px;
+	margin-left: $grid-unit-05;
+	text-decoration: underline dotted;
 }
 
 .components-datetime__time-legend {

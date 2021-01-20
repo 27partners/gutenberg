@@ -5,10 +5,17 @@
         "isValid": true,
         "attributes": {
             "query": {
-                "perPage": 3,
-                "pages": 1,
-                "offset": 0,
-                "categoryIds": []
+				"perPage": null,
+				"pages": 1,
+				"offset": 0,
+				"postType": "post",
+				"categoryIds": [],
+				"tagIds": [],
+				"order": "desc",
+				"orderBy": "date",
+				"author": "",
+				"search": "",
+				"exclude": []
             }
         },
         "innerBlocks": [],

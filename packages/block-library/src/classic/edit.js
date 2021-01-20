@@ -6,9 +6,16 @@ import { debounce } from 'lodash';
 /**
  * WordPress dependencies
  */
-import { Component } from '@wordpress/element';
-import { __, _x } from '@wordpress/i18n';
+import { BlockControls, useBlockProps } from '@wordpress/block-editor';
+import { ToolbarGroup } from '@wordpress/components';
+import { useEffect, useRef } from '@wordpress/element';
+import { __ } from '@wordpress/i18n';
 import { BACKSPACE, DELETE, F10, isKeyboardEvent } from '@wordpress/keycodes';
+
+/**
+ * Internal dependencies
+ */
+import ConvertToBlocksButton from './convert-to-blocks-button';
 
 const { wp } = window;
 
@@ -28,74 +35,39 @@ function isTmceEmpty( editor ) {
 	return /^\n?$/.test( body.innerText || body.textContent );
 }
 
-export default class ClassicEdit extends Component {
-	constructor( props ) {
-		super( props );
-		this.initialize = this.initialize.bind( this );
-		this.onSetup = this.onSetup.bind( this );
-		this.focus = this.focus.bind( this );
+export default function ClassicEdit( {
+	clientId,
+	attributes: { content },
+	setAttributes,
+	onReplace,
+} ) {
+	const didMount = useRef( false );
+
+	useEffect( () => {
+		if ( ! didMount.current ) {
+			return;
 	}
 
-	componentDidMount() {
+		const editor = window.tinymce.get( `editor-${ clientId }` );
+		const currentContent = editor?.getContent();
+
+		if ( currentContent !== content ) {
+			editor.setContent( content || '' );
+		}
+	}, [ content ] );
+
+	useEffect( () => {
 		const { baseURL, suffix } = window.wpEditorL10n.tinymce;
+
+		didMount.current = true;
 
 		window.tinymce.EditorManager.overrideDefaults( {
 			base_url: baseURL,
 			suffix,
 		} );
 
-		if ( document.readyState === 'complete' ) {
-			this.initialize();
-		} else {
-			window.addEventListener( 'DOMContentLoaded', this.initialize );
-		}
-	}
-
-	componentWillUnmount() {
-		window.addEventListener( 'DOMContentLoaded', this.initialize );
-		wp.oldEditor.remove( `editor-${ this.props.clientId }` );
-	}
-
-	componentDidUpdate( prevProps ) {
-		const {
-			clientId,
-			attributes: { content },
-		} = this.props;
-
-		const editor = window.tinymce.get( `editor-${ clientId }` );
-		const currentContent = editor.getContent();
-
-		if (
-			prevProps.attributes.content !== content &&
-			currentContent !== content
-		) {
-			editor.setContent( content || '' );
-		}
-	}
-
-	initialize() {
-		const { clientId } = this.props;
-		const { settings } = window.wpEditorL10n.tinymce;
-		wp.oldEditor.initialize( `editor-${ clientId }`, {
-			tinymce: {
-				...settings,
-				inline: true,
-				content_css: false,
-				fixed_toolbar_container: `#toolbar-${ clientId }`,
-				setup: this.onSetup,
-			},
-		} );
-	}
-
-	onSetup( editor ) {
-		const {
-			attributes: { content },
-			setAttributes,
-		} = this.props;
-		const { ref } = this;
+		function onSetup( editor ) {
 		let bookmark;
-
-		this.editor = editor;
 
 		if ( content ) {
 			editor.on( 'loadContent', () => editor.setContent( content ) );
@@ -131,9 +103,7 @@ export default class ClassicEdit extends Component {
 			bookmark = null;
 		} );
 
-		editor.on(
-			'Paste Change input Undo Redo',
-			debounce( () => {
+			const debouncedOnChange = debounce( () => {
 				const value = editor.getContent();
 
 				if ( value !== editor._lastChange ) {
@@ -142,8 +112,13 @@ export default class ClassicEdit extends Component {
 						content: value,
 					} );
 				}
-			}, 250 )
-		);
+			}, 250 );
+			editor.on( 'Paste Change input Undo Redo', debouncedOnChange );
+
+			// We need to cancel the debounce call because when we remove
+			// the editor (onUnmount) this callback is executed in
+			// another tick. This results in setting the content to empty.
+			editor.on( 'remove', debouncedOnChange.cancel );
 
 		editor.on( 'keydown', ( event ) => {
 			if ( isKeyboardEvent.primary( event, 'z' ) ) {
@@ -152,11 +127,12 @@ export default class ClassicEdit extends Component {
 			}
 
 			if (
-				( event.keyCode === BACKSPACE || event.keyCode === DELETE ) &&
+					( event.keyCode === BACKSPACE ||
+						event.keyCode === DELETE ) &&
 				isTmceEmpty( editor )
 			) {
 				// delete the block
-				this.props.onReplace( [] );
+					onReplace( [] );
 				event.preventDefault();
 				event.stopImmediatePropagation();
 			}
@@ -171,62 +147,64 @@ export default class ClassicEdit extends Component {
 			}
 		} );
 
-		// TODO: the following is for back-compat with WP 4.9, not needed in WP 5.0. Remove it after the release.
-		editor.addButton( 'kitchensink', {
-			tooltip: _x( 'More', 'button to expand options' ),
-			icon: 'dashicon dashicons-editor-kitchensink',
-			onClick() {
-				const button = this;
-				const active = ! button.active();
+			editor.on( 'init', () => {
+				const rootNode = editor.getBody();
 
-				button.active( active );
-				editor.dom.toggleClass( ref, 'has-advanced-toolbar', active );
-			},
-		} );
-
-		// Show the second, third, etc. toolbars when the `kitchensink` button is removed by a plugin.
-		editor.on( 'init', () => {
-			if (
-				editor.settings.toolbar1 &&
-				editor.settings.toolbar1.indexOf( 'kitchensink' ) === -1
-			) {
-				editor.dom.addClass( ref, 'has-advanced-toolbar' );
+				// Create the toolbar by refocussing the editor.
+				if ( rootNode.ownerDocument.activeElement === rootNode ) {
+					rootNode.blur();
+					editor.focus();
 			}
 		} );
+		}
 
-		editor.addButton( 'wp_add_media', {
-			tooltip: __( 'Insert Media' ),
-			icon: 'dashicon dashicons-admin-media',
-			cmd: 'WP_Medialib',
+		function initialize() {
+			const { settings } = window.wpEditorL10n.tinymce;
+			wp.oldEditor.initialize( `editor-${ clientId }`, {
+				tinymce: {
+					...settings,
+					inline: true,
+					content_css: false,
+					fixed_toolbar_container: `#toolbar-${ clientId }`,
+					setup: onSetup,
+				},
 		} );
-		// End TODO.
+		}
 
-		editor.on( 'init', () => {
-			const rootNode = this.editor.getBody();
-
-			// Create the toolbar by refocussing the editor.
-			if ( document.activeElement === rootNode ) {
-				rootNode.blur();
-				this.editor.focus();
+		function onReadyStateChange() {
+			if ( document.readyState === 'complete' ) {
+				initialize();
 			}
-		} );
 	}
 
-	focus() {
-		if ( this.editor ) {
-			this.editor.focus();
+		if ( document.readyState === 'complete' ) {
+			initialize();
+		} else {
+			document.addEventListener( 'readystatechange', onReadyStateChange );
+		}
+
+		return () => {
+			document.removeEventListener(
+				'readystatechange',
+				onReadyStateChange
+			);
+			wp.oldEditor.remove( `editor-${ clientId }` );
+		};
+	}, [] );
+
+	function focus() {
+		const editor = window.tinymce.get( `editor-${ clientId }` );
+		if ( editor ) {
+			editor.focus();
 		}
 	}
 
-	onToolbarKeyDown( event ) {
+	function onToolbarKeyDown( event ) {
 		// Prevent WritingFlow from kicking in and allow arrows navigation on the toolbar.
 		event.stopPropagation();
 		// Prevent Mousetrap from moving focus to the top toolbar when pressing `alt+f10` on this block toolbar.
 		event.nativeEvent.stopImmediatePropagation();
 	}
-
-	render() {
-		const { clientId } = this.props;
 
 		// Disable reasons:
 		//
@@ -235,22 +213,29 @@ export default class ClassicEdit extends Component {
 		//    from the KeyboardShortcuts component to stop their propagation.
 
 		/* eslint-disable jsx-a11y/no-static-element-interactions */
-		return [
-			<div
-				key="toolbar"
-				id={ `toolbar-${ clientId }` }
-				ref={ ( ref ) => ( this.ref = ref ) }
+	return (
+		<>
+			<BlockControls>
+				<ToolbarGroup>
+					<ConvertToBlocksButton clientId={ clientId } />
+				</ToolbarGroup>
+			</BlockControls>
+			<div { ...useBlockProps() }>
+				<div
+					key="toolbar"
+					id={ `toolbar-${ clientId }` }
 				className="block-library-classic__toolbar"
-				onClick={ this.focus }
+					onClick={ focus }
 				data-placeholder={ __( 'Classic' ) }
-				onKeyDown={ this.onToolbarKeyDown }
-			/>,
+					onKeyDown={ onToolbarKeyDown }
+				/>
 			<div
 				key="editor"
 				id={ `editor-${ clientId }` }
 				className="wp-block-freeform block-library-rich-text__tinymce"
-			/>,
-		];
-		/* eslint-enable jsx-a11y/no-static-element-interactions */
-	}
+				/>
+			</div>
+		</>
+	);
+	/* eslint-enable jsx-a11y/no-static-element-interactions */
 }

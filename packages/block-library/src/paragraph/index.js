@@ -56,6 +56,6 @@ export const settings = {
 				( attributesToMerge.content || '' ),
 		};
 	},
-	edit: withI18N( metadata )( edit ),
+	edit,
 	save,
 };

@@ -46,7 +46,8 @@ Clicks a block toolbar button.
 
 _Parameters_
 
--   _buttonAriaLabel_ `string`: The aria label of the button to click.
+-   _label_ `string`: The text string of the button label.
+-   _type_ `[string]`: The type of button label: 'ariaLabel' or 'content'.
 
 <a name="clickButton" href="#clickButton">#</a> **clickButton**
 
@@ -253,6 +254,14 @@ _Returns_
 
 -   `Promise`: Promise resolving with a string containing the block title.
 
+<a name="getCurrentPostContent" href="#getCurrentPostContent">#</a> **getCurrentPostContent**
+
+Returns a promise which resolves with the current post content (HTML string).
+
+_Returns_
+
+-   `Promise`: Promise resolving with current post content markup.
+
 <a name="getEditedPostContent" href="#getEditedPostContent">#</a> **getEditedPostContent**
 
 Returns a promise which resolves with the edited post content (HTML string).
@@ -288,6 +297,16 @@ _Returns_
 
 Opens the inserter, searches for the given term, then selects the first
 result that appears. It then waits briefly for the block list to update.
+
+_Parameters_
+
+-   _searchTerm_ `string`: The text to search the inserter for.
+
+<a name="insertBlockDirectoryBlock" href="#insertBlockDirectoryBlock">#</a> **insertBlockDirectoryBlock**
+
+Opens the inserter, searches for the given block, then selects the
+first result that appears from the block directory. It then waits briefly for the block list to
+update.
 
 _Parameters_
 
@@ -467,6 +486,17 @@ Sets browser viewport to specified type.
 _Parameters_
 
 -   _viewport_ `WPViewport`: Viewport name or dimensions object to assign.
+
+<a name="setClipboardData" href="#setClipboardData">#</a> **setClipboardData**
+
+Sets the clipboard data that can be pasted with
+`pressKeyWithModifier( 'primary', 'v' )`.
+
+_Parameters_
+
+-   _$1_ `Object`: Options.
+-   _$1.plainText_ `string`: Plain text to set.
+-   _$1.html_ `string`: HTML to set.
 
 <a name="setPostContent" href="#setPostContent">#</a> **setPostContent**
 

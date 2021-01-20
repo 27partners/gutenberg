@@ -1,7 +1,7 @@
 /**
  * External dependencies
  */
-import { create, act } from 'react-test-renderer';
+import { render } from '@testing-library/react';
 import { noop } from 'lodash';
 
 /**
@@ -11,10 +11,7 @@ import PanelColorSettings from '../';
 
 describe( 'PanelColorSettings', () => {
 	it( 'should not render anything if there are no colors to choose', async () => {
-		let root;
-
-		await act( async () => {
-			root = create(
+		const { container } = render(
 				<PanelColorSettings
 					title="Test Title"
 					colors={ [] }
@@ -33,15 +30,11 @@ describe( 'PanelColorSettings', () => {
 					] }
 				/>
 			);
-		} );
-
-		expect( root.toJSON() ).toBe( null );
+		expect( container.innerHTML ).toBe( '' );
 	} );
 
 	it( 'should render a color panel if at least one setting supports custom colors', async () => {
-		let root;
-		await act( async () => {
-			root = create(
+		const { container } = render(
 				<PanelColorSettings
 					title="Test Title"
 					colors={ [] }
@@ -61,14 +54,11 @@ describe( 'PanelColorSettings', () => {
 					] }
 				/>
 			);
-		} );
-		expect( root ).not.toBe( null );
+		expect( container.innerHTML ).not.toBe( '' );
 	} );
 
 	it( 'should render a color panel if at least one setting specifies some colors to choose', async () => {
-		let root;
-		await act( async () => {
-			root = create(
+		const { container } = render(
 				<PanelColorSettings
 					title="Test Title"
 					colors={ [] }
@@ -94,14 +84,11 @@ describe( 'PanelColorSettings', () => {
 					] }
 				/>
 			);
-		} );
-		expect( root ).not.toBe( null );
+		expect( container.innerHTML ).not.toBe( '' );
 	} );
 
 	it( 'should not render anything if none of the setting panels has colors to choose', async () => {
-		let root;
-		await act( async () => {
-			root = create(
+		const { container } = render(
 				<PanelColorSettings
 					title="Test Title"
 					colors={ [] }
@@ -124,7 +111,6 @@ describe( 'PanelColorSettings', () => {
 					] }
 				/>
 			);
-		} );
-		expect( root ).not.toBe( null );
+		expect( container.innerHTML ).not.toBe( '' );
 	} );
 } );

@@ -12,10 +12,9 @@ import {
 	AlignmentToolbar,
 	BlockControls,
 	RichText,
-	__experimentalBlock as Block,
+	useBlockProps,
 } from '@wordpress/block-editor';
 import { ToolbarGroup } from '@wordpress/components';
-import { I18NToolbar } from '@wordpress/storyshare';
 
 /**
  * Internal dependencies
@@ -29,8 +28,14 @@ function HeadingEdit( {
 	onReplace,
 	mergedStyle,
 } ) {
-	const { align, content, level, placeholder } = attributes;
+	const { textAlign, content, level, placeholder } = attributes;
 	const tagName = 'h' + level;
+	const blockProps = useBlockProps( {
+		className: classnames( {
+			[ `has-text-align-${ textAlign }` ]: textAlign,
+		} ),
+		style: mergedStyle,
+	} );
 
 	return (
 		<>
@@ -44,16 +49,15 @@ function HeadingEdit( {
 					/>
 				</ToolbarGroup>
 				<AlignmentToolbar
-					value={ align }
+					value={ textAlign }
 					onChange={ ( nextAlign ) => {
-						setAttributes( { align: nextAlign } );
+						setAttributes( { textAlign: nextAlign } );
 					} }
 				/>
-				<I18NToolbar />
 			</BlockControls>
 			<RichText
 				identifier="content"
-				tagName={ Block[ tagName ] }
+				tagName={ tagName }
 				value={ content }
 				onChange={ ( value ) => setAttributes( { content: value } ) }
 				onMerge={ mergeBlocks }
@@ -69,12 +73,9 @@ function HeadingEdit( {
 				} }
 				onReplace={ onReplace }
 				onRemove={ () => onReplace( [] ) }
-				className={ classnames( {
-					[ `has-text-align-${ align }` ]: align,
-				} ) }
 				placeholder={ placeholder || __( 'Write heading…' ) }
-				textAlign={ align }
-				style={ mergedStyle }
+				textAlign={ textAlign }
+				{ ...blockProps }
 			/>
 		</>
 	);

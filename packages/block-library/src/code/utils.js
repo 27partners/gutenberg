@@ -16,7 +16,6 @@ import { escapeEditableHTML } from '@wordpress/escape-html';
  */
 export function escape( content ) {
 	return flow(
-		escapeEditableHTML,
 		escapeOpeningSquareBrackets,
 		escapeProtocolInIsolatedUrls
 	)( content || '' );

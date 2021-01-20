@@ -2,7 +2,7 @@
  * WordPress dependencies
  */
 import { __ } from '@wordpress/i18n';
-import { Component } from '@wordpress/element';
+import { useState } from '@wordpress/element';
 import { Button, Popover } from '@wordpress/components';
 import { chevronDown } from '@wordpress/icons';
 
@@ -12,38 +12,21 @@ import { chevronDown } from '@wordpress/icons';
 import LinkViewer from './link-viewer';
 import LinkEditor from './link-editor';
 
-class URLPopover extends Component {
-	constructor() {
-		super( ...arguments );
-
-		this.toggleSettingsVisibility = this.toggleSettingsVisibility.bind(
-			this
-		);
-
-		this.state = {
-			isSettingsExpanded: false,
-		};
-	}
-
-	toggleSettingsVisibility() {
-		this.setState( {
-			isSettingsExpanded: ! this.state.isSettingsExpanded,
-		} );
-	}
-
-	render() {
-		const {
+function URLPopover( {
 			additionalControls,
 			children,
 			renderSettings,
 			position = 'bottom center',
 			focusOnMount = 'firstElement',
 			...popoverProps
-		} = this.props;
-
-		const { isSettingsExpanded } = this.state;
+} ) {
+	const [ isSettingsExpanded, setIsSettingsExpanded ] = useState( false );
 
 		const showSettings = !! renderSettings && isSettingsExpanded;
+
+	const toggleSettingsVisibility = () => {
+		setIsSettingsExpanded( ! isSettingsExpanded );
+	};
 
 		return (
 			<Popover
@@ -60,7 +43,7 @@ class URLPopover extends Component {
 								className="block-editor-url-popover__settings-toggle"
 								icon={ chevronDown }
 								label={ __( 'Link settings' ) }
-								onClick={ this.toggleSettingsVisibility }
+							onClick={ toggleSettingsVisibility }
 								aria-expanded={ isSettingsExpanded }
 							/>
 						) }
@@ -79,7 +62,6 @@ class URLPopover extends Component {
 			</Popover>
 		);
 	}
-}
 
 URLPopover.LinkEditor = LinkEditor;
 

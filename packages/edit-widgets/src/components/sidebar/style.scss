@@ -74,25 +74,11 @@
 	}
 }
 
-.edit-widgets-block-areas__top-container {
+.edit-widgets-widget-areas__top-container {
 	display: flex;
 	padding: $grid-unit-20;
 	.block-editor-block-icon {
 		margin-right: $grid-unit-20;
-	}
-}
-
-.edit-widgets-block-areas {
-	ul {
-		list-style: none;
-		margin-bottom: -$border-width;
-	}
-
-	li {
-		margin: 0;
-		border-bottom: $border-width solid $gray-200;
-		&:first-child {
-			border-top: $border-width solid $gray-200;
 		}
 
 		button {

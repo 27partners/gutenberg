@@ -1,7 +1,8 @@
 /**
  * WordPress dependencies
  */
-import { MenuItem } from '@wordpress/components';
+import { MenuItem, VisuallyHidden } from '@wordpress/components';
+import { external } from '@wordpress/icons';
 import { __ } from '@wordpress/i18n';
 import { registerPlugin } from '@wordpress/plugins';
 import { addQueryArgs } from '@wordpress/url';
@@ -34,12 +35,11 @@ registerPlugin( 'edit-post', {
 							<KeyboardShortcutsHelpMenuItem
 								onSelect={ onClose }
 							/>
-							{ /*
 							<WelcomeGuideMenuItem />
-*/ }
 							<CopyContentMenuItem />
-							{ /*<MenuItem
+							<MenuItem
 								role="menuitem"
+								icon={ external }
 								href={ __(
 									'https://wordpress.org/support/article/wordpress-editor/'
 								) }
@@ -47,7 +47,13 @@ registerPlugin( 'edit-post', {
 								rel="noopener noreferrer"
 							>
 								{ __( 'Help' ) }
-							</MenuItem>*/ }
+								<VisuallyHidden as="span">
+									{
+										/* translators: accessibility text */
+										__( '(opens in a new tab)' )
+									}
+								</VisuallyHidden>
+							</MenuItem>
 						</>
 					) }
 				</ToolsMoreMenuGroup>

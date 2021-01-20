@@ -2,11 +2,14 @@
  * External dependencies
  */
 import classnames from 'classnames';
+import { noop } from 'lodash';
+import mergeRefs from 'react-merge-refs';
 
 /**
  * WordPress dependencies
  */
-import { Component, forwardRef } from '@wordpress/element';
+import { useReducedMotion } from '@wordpress/compose';
+import { forwardRef, useRef } from '@wordpress/element';
 import { chevronUp, chevronDown } from '@wordpress/icons';
 
 /**
@@ -14,51 +17,90 @@ import { chevronUp, chevronDown } from '@wordpress/icons';
  */
 import Button from '../button';
 import Icon from '../icon';
+import { useControlledState, useUpdateEffect } from '../utils';
 
-export class PanelBody extends Component {
-	constructor( props ) {
-		super( ...arguments );
-		this.state = {
-			opened: props.initialOpen === undefined ? true : props.initialOpen,
-		};
-		this.toggle = this.toggle.bind( this );
-	}
+export function PanelBody(
+	{
+		children,
+		className,
+		icon,
+		initialOpen,
+		onToggle = noop,
+		opened,
+		title,
+		scrollAfterOpen = true,
+	},
+	ref
+) {
+	const [ isOpened, setIsOpened ] = useControlledState( opened, {
+		initial: initialOpen === undefined ? true : initialOpen,
+	} );
+	const nodeRef = useRef();
 
-	toggle( event ) {
+	// Defaults to 'smooth' scrolling
+	// https://developer.mozilla.org/en-US/docs/Web/API/Element/scrollIntoView
+	const scrollBehavior = useReducedMotion() ? 'auto' : 'smooth';
+
+	const handleOnToggle = ( event ) => {
 		event.preventDefault();
-		if ( this.props.opened === undefined ) {
-			this.setState( ( state ) => ( {
-				opened: ! state.opened,
-			} ) );
-		}
+		const next = ! isOpened;
+		setIsOpened( next );
+		onToggle( next );
+	};
 
-		if ( this.props.onToggle ) {
-			this.props.onToggle();
+	// Ref is used so that the effect does not re-run upon scrollAfterOpen changing value
+	const scrollAfterOpenRef = useRef();
+	scrollAfterOpenRef.current = scrollAfterOpen;
+	// Runs after initial render
+	useUpdateEffect( () => {
+		if (
+			isOpened &&
+			scrollAfterOpenRef.current &&
+			nodeRef.current?.scrollIntoView
+		) {
+			/*
+			 * Scrolls the content into view when visible.
+			 * This improves the UX when there are multiple stacking <PanelBody />
+			 * components in a scrollable container.
+			 */
+			nodeRef.current.scrollIntoView( {
+				inline: 'nearest',
+				block: 'nearest',
+				behavior: scrollBehavior,
+			} );
 		}
+	}, [ isOpened, scrollBehavior ] );
+
+	const classes = classnames( 'components-panel__body', className, {
+		'is-opened': isOpened,
+	} );
+
+	return (
+		<div className={ classes } ref={ mergeRefs( [ nodeRef, ref ] ) }>
+			<PanelBodyTitle
+				icon={ icon }
+				isOpened={ isOpened }
+				onClick={ handleOnToggle }
+				title={ title }
+			/>
+			{ typeof children === 'function'
+				? children( { opened: isOpened } )
+				: isOpened && children }
+		</div>
+	);
 	}
 
-	render() {
-		const {
-			title,
-			children,
-			opened,
-			className,
-			icon,
-			forwardedRef,
-		} = this.props;
-		const isOpened = opened === undefined ? this.state.opened : opened;
-		const classes = classnames( 'components-panel__body', className, {
-			'is-opened': isOpened,
-		} );
+const PanelBodyTitle = forwardRef(
+	( { isOpened, icon, title, ...props }, ref ) => {
+		if ( ! title ) return null;
 
 		return (
-			<div className={ classes } ref={ forwardedRef }>
-				{ !! title && (
 					<h2 className="components-panel__body-title">
 						<Button
 							className="components-panel__body-toggle"
-							onClick={ this.toggle }
 							aria-expanded={ isOpened }
+					ref={ ref }
+					{ ...props }
 						>
 							{ /*
 								Firefox + NVDA don't announce aria-expanded because the browser
@@ -80,16 +122,11 @@ export class PanelBody extends Component {
 							) }
 						</Button>
 					</h2>
-				) }
-				{ isOpened && children }
-			</div>
 		);
 	}
-}
+);
 
-const forwardedPanelBody = ( props, ref ) => {
-	return <PanelBody { ...props } forwardedRef={ ref } />;
-};
-forwardedPanelBody.displayName = 'PanelBody';
+const ForwardedComponent = forwardRef( PanelBody );
+ForwardedComponent.displayName = 'PanelBody';
 
-export default forwardRef( forwardedPanelBody );
+export default ForwardedComponent;

@@ -28,7 +28,7 @@ in the following way:
 ```js
 import { registerPlugin } from '@wordpress/plugins';
 import {
-	__experimentalFullscrenModeClose as FullscrenModeClose, 
+	__experimentalFullscreenModeClose as FullscreenModeClose,
 } from '@wordpress/edit-site';
 import { 
 	__experimentalMainDashboardButton as MainDashboardButton,
@@ -38,7 +38,7 @@ import { close } from '@wordpress/icons';
 
 const MainDashboardButtonIconTest = () => (
     <MainDashboardButton>
-        <FullscrenModeClose icon={ close } />
+        <FullscreenModeClose icon={ close } />
     </MainDashboardButton>
 );
 

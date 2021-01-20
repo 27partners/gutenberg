@@ -11,17 +11,21 @@ import {
 	RichText,
 	BlockControls,
 	AlignmentToolbar,
-	__experimentalBlock as Block,
+	useBlockProps,
 } from '@wordpress/block-editor';
 import { I18NToolbar } from '@wordpress/storyshare';
 
 export default function VerseEdit( {
 	attributes,
 	setAttributes,
-	className,
 	mergeBlocks,
 } ) {
 	const { textAlign, content } = attributes;
+	const blockProps = useBlockProps( {
+		className: classnames( {
+			[ `has-text-align-${ textAlign }` ]: textAlign,
+		} ),
+	} );
 
 	return (
 		<>
@@ -35,7 +39,7 @@ export default function VerseEdit( {
 				<I18NToolbar />
 			</BlockControls>
 			<RichText
-				tagName={ Block.pre }
+				tagName="pre"
 				identifier="content"
 				preserveWhiteSpace
 				value={ content }
@@ -45,11 +49,9 @@ export default function VerseEdit( {
 					} );
 				} }
 				placeholder={ __( 'Write…' ) }
-				className={ classnames( className, {
-					[ `has-text-align-${ textAlign }` ]: textAlign,
-				} ) }
 				onMerge={ mergeBlocks }
 				textAlign={ textAlign }
+				{ ...blockProps }
 			/>
 		</>
 	);

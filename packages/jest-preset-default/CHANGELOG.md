@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 6.5.0 (2020-10-30)
+
+### Enhancements
+
+-   Ignore `/vendor` folder when searching for tests.
+
 ## 6.0.0 (2020-04-15)
 
 ### Breaking Changes
@@ -26,7 +32,6 @@
 ### New Features
 
 - Added support to collapse or omit successful test results from Travis CI builds ([#16744](https://github.com/WordPress/gutenberg/issues/16744))
-
 
 ## 5.2.0 (2019-11-15)
 

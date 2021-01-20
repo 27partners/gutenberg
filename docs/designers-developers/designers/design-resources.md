@@ -41,7 +41,7 @@ The [WordPress Design team](https://make.wordpress.org/design/) uses [Figma](htt
 
 2. The **Library** modal will open and allow you to view a list of available libraries. Toggle to _Enable_ or _Disable_ a specific library:
 
-![Switching on the WordPress components libray in Figma](https://wordpress.org/gutenberg/files/2019/08/figma-libraries-e1564770879415.png)
+![Switching on the WordPress components library in Figma](https://wordpress.org/gutenberg/files/2019/08/figma-libraries-e1564770879415.png)
 
 **How to refine or contribute to the WordPress components React library _(Coming soon)_**
 

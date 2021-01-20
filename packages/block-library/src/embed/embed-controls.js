@@ -9,10 +9,9 @@ import {
 	ToolbarGroup,
 } from '@wordpress/components';
 import { BlockControls, InspectorControls } from '@wordpress/block-editor';
-import { pencil } from '@wordpress/icons';
+import { edit } from '@wordpress/icons';
 
-const EmbedControls = ( props ) => {
-	const {
+const EmbedControls = ( {
 		blockSupportsResponsive,
 		showEditButton,
 		themeSupportsResponsive,
@@ -20,8 +19,7 @@ const EmbedControls = ( props ) => {
 		getResponsiveHelp,
 		toggleResponsive,
 		switchBackToURLInput,
-	} = props;
-	return (
+} ) => (
 		<>
 			<BlockControls>
 				<ToolbarGroup>
@@ -29,7 +27,7 @@ const EmbedControls = ( props ) => {
 						<ToolbarButton
 							className="components-toolbar__control"
 							label={ __( 'Edit URL' ) }
-							icon={ pencil }
+						icon={ edit }
 							onClick={ switchBackToURLInput }
 						/>
 					) }
@@ -52,6 +50,5 @@ const EmbedControls = ( props ) => {
 			) }
 		</>
 	);
-};
 
 export default EmbedControls;

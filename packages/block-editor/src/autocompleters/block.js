@@ -1,13 +1,16 @@
 /**
  * External dependencies
  */
-import { noop, map } from 'lodash';
+import { noop, orderBy } from 'lodash';
 
 /**
  * WordPress dependencies
  */
 import { useSelect } from '@wordpress/data';
-import { createBlock } from '@wordpress/blocks';
+import {
+	createBlock,
+	createBlocksFromInnerBlocksTemplate,
+} from '@wordpress/blocks';
 import { useMemo } from '@wordpress/element';
 
 /**
@@ -15,20 +18,9 @@ import { useMemo } from '@wordpress/element';
  */
 import { searchBlockItems } from '../components/inserter/search-items';
 import useBlockTypesState from '../components/inserter/hooks/use-block-types-state';
-import { includeVariationsInInserterItems } from '../components/inserter/utils';
 import BlockIcon from '../components/block-icon';
 
-const createBlocksFromInnerBlocksTemplate = ( innerBlocksTemplate ) => {
-	return map(
-		innerBlocksTemplate,
-		( [ name, attributes, innerBlocks = [] ] ) =>
-			createBlock(
-				name,
-				attributes,
-				createBlocksFromInnerBlocksTemplate( innerBlocks )
-			)
-	);
-};
+const SHOWN_BLOCK_TYPES = 9;
 
 /** @typedef {import('@wordpress/block-editor').WPEditorInserterItem} WPEditorInserterItem */
 
@@ -74,12 +66,18 @@ function createBlockCompleter() {
 			);
 
 			const filteredItems = useMemo( () => {
-				return searchBlockItems(
+				const initialFilteredItems = !! filterValue.trim()
+					? searchBlockItems(
 					items,
 					categories,
 					collections,
 					filterValue
-				).filter( ( item ) => item.name !== selectedBlockName );
+					  )
+					: orderBy( items, [ 'frecency' ], [ 'desc' ] );
+
+				return initialFilteredItems
+					.filter( ( item ) => item.name !== selectedBlockName )
+					.slice( 0, SHOWN_BLOCK_TYPES );
 			}, [
 				filterValue,
 				selectedBlockName,
@@ -90,8 +88,7 @@ function createBlockCompleter() {
 
 			const options = useMemo(
 				() =>
-					includeVariationsInInserterItems( filteredItems ).map(
-						( blockItem ) => {
+					filteredItems.map( ( blockItem ) => {
 							const { title, icon, isDisabled } = blockItem;
 							return {
 								key: `block-${ blockItem.id }`,
@@ -108,8 +105,7 @@ function createBlockCompleter() {
 								),
 								isDisabled,
 							};
-						}
-					),
+					} ),
 				[ filteredItems ]
 			);
 

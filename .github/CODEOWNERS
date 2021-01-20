@@ -12,7 +12,7 @@
 
 # Blocks
 /packages/block-library                         @Soean @ajitbohra @talldan
-/packages/block-library/src/gallery             @mkevins @pinarol
+/packages/block-library/src/gallery             @mkevins
 /packages/block-library/src/social-links        @mkaz
 /packages/block-library/src/social-link         @mkaz
 /packages/block-library/src/image               @ajlende
@@ -34,7 +34,13 @@
 /packages/server-side-render
 
 # Widgets
-/packages/edit-widgets                          @youknowriad
+/packages/edit-widgets                          @youknowriad @draganescu @talldan @noisysocks @tellthemachines @adamziel @kevin940726
+
+# Navigation
+/packages/edit-navigation                       @draganescu @talldan @noisysocks @tellthemachines @adamziel @kevin940726
+
+# Full Site Editing
+/packages/edit-site                             @youknowriad
 
 # Navigation
 /packages/edit-navigation
@@ -50,7 +56,7 @@
 /packages/babel-plugin-makepot                  @ntwb @nerrad @ajitbohra
 /packages/babel-preset-default                  @gziolo @ntwb @nerrad @ajitbohra
 /packages/browserslist-config                   @gziolo @ntwb @nerrad @ajitbohra
-/packages/create-block                          @gziolo
+/packages/create-block                          @gziolo @mkaz
 /packages/custom-templated-path-webpack-plugin  @ntwb @nerrad @ajitbohra
 /packages/docgen                                @nosolosw
 /packages/e2e-test-utils                        @gziolo @ntwb @nerrad @ajitbohra
@@ -101,9 +107,9 @@
 /packages/plugins                               @gziolo @adamsilverstein
 
 # Rich Text
-/packages/format-library                        @ellatrix @daniloercoli @sergioestevao @etoledom
-/packages/rich-text                             @ellatrix @daniloercoli @sergioestevao @etoledom
-/packages/block-editor/src/components/rich-text @ellatrix @daniloercoli @sergioestevao @etoledom
+/packages/format-library                        @ellatrix @etoledom @cameronvoell @guarani
+/packages/rich-text                             @ellatrix @etoledom @cameronvoell @guarani
+/packages/block-editor/src/components/rich-text @ellatrix @etoledom @cameronvoell @guarani
 
 # Project Management
 /.github                                        @youknowriad @mapk @karmatosed
